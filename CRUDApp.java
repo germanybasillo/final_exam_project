@@ -360,12 +360,12 @@ protected void paintComponent(Graphics g) {
                 public void actionPerformed(ActionEvent e) {
                     if (random.nextBoolean()) {
                         startAttackAnimation(true);
-                        int randomDamage = random.nextInt(10);
-                        if (randomDamage == 0) {
+                        damage1 = random.nextInt(10);
+                        if (damage1 == 0) {
                             showDamageText(false, "-0"); // Miss
                         } else {
-                            hero2HP -= randomDamage;
-                            showDamageText(false, "-" + randomDamage);
+                            hero2HP -= damage1;
+                            showDamageText(false, "-" + damage1);
                         }
                         if (hero2HP <= 0) {
                             hero2HP = 0;
@@ -374,12 +374,12 @@ protected void paintComponent(Graphics g) {
                         }
                     } else {
                         startAttackAnimation(false);
-                        int randomDamage = random.nextInt(10);
-                        if (randomDamage == 0) {
+                        damage2 = random.nextInt(10);
+                        if (damage2 == 0) {
                             showDamageText(true, "-0"); // Miss
                         } else {
-                            hero1HP -= randomDamage;
-                            showDamageText(true, "-" + randomDamage);
+                            hero1HP -= damage2;
+                            showDamageText(true, "-" + damage2);
                         }
                         if (hero1HP <= 0) {
                             hero1HP = 0;
@@ -392,7 +392,7 @@ protected void paintComponent(Graphics g) {
             });
             attackTimer.start();
         }
-
+        
         private void startAttackAnimation(boolean isHero1) {
             Timer punchTimer = new Timer(100, new ActionListener() {
                 int punchCount = 0;
