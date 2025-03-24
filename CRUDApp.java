@@ -13,22 +13,23 @@ public class CRUDApp {
     private static ArrayList<String> list = new ArrayList<>();
     private static DefaultListModel<String> listModel = new DefaultListModel<>();
     private static JList<String> jList = new JList<>(listModel);
-    private static List<String> validHeroes = Arrays.asList(
-            "Anti-Mage", "Axe", "Crystal Maiden", "Juggernaut", "Invoker", "Pudge", "Sniper"
-    );
     private static Map<String, Integer> dotaItems = new HashMap<>();
     private static Map<String, ArrayList<String>> heroInventory = new HashMap<>();
     private static Map<String, Integer> heroDamage = new HashMap<>();
 
     public static void main(String[] args) {
-        list.add("Anti-Mage");
-        list.add("Axe");
-        list.add("Crystal Maiden");
-
+        // Start with an empty list (no heroes added initially)
+        list.clear(); // Clear any pre-existing data (optional safety)
+    
         initializeItems();
-        SwingUtilities.invokeLater(() -> createUI());
+        SwingUtilities.invokeLater(() -> {
+            if (list.isEmpty()) {
+                JOptionPane.showMessageDialog(null, "No hero added yet!");
+            }
+            createUI();
+        });
     }
-
+    
     public static void createUI() {
         JFrame frame = new JFrame("CRUD Application - Dota 2 Heroes");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -70,29 +71,39 @@ public class CRUDApp {
     }
 
     public static void initializeItems() {
-        dotaItems.put("Aghanim's Scepter", 25);
-        dotaItems.put("Desolator", 40);
-        dotaItems.put("Radiance", 50);
-        dotaItems.put("Black King Bar", 20);
-        dotaItems.put("Manta Style", 18);
-        dotaItems.put("Satanic", 30);
+        dotaItems.put("Desolator", 40);     
+        dotaItems.put("Daedalus", 60);       // Critical damage
+        dotaItems.put("Monkey King Bar", 45); 
+        dotaItems.put("Divine Rapier", 100);
+        dotaItems.put("Crystalys", 30);    
+        dotaItems.put("Battle Fury", 50);
+        dotaItems.put("Satanic", 50);
+        dotaItems.put("Eye of The Skadi", 50);  
     }
 
     public static void addItem() {
-        String newItem = JOptionPane.showInputDialog("Enter Dota 2 hero to add:");
-        if (newItem != null && !newItem.trim().isEmpty()) {
-            newItem = capitalizeFirstLetter(newItem.trim());
-
-            if (validHeroes.contains(newItem)) {
-                if (!list.contains(newItem)) {
-                    list.add(newItem);
-                    listModel.addElement(newItem);
-                    JOptionPane.showMessageDialog(null, "Successfully added: " + newItem);
+        List<String> meleeHeroes = Arrays.asList(
+                "Axe", "Juggernaut", "Pudge", "Anti-Mage", "Slark", "Sven", 
+                "Phantom Assassin", "Ursa", "Wraith King", "Troll Warlord"
+        );
+    
+        JComboBox<String> heroDropdown = new JComboBox<>(meleeHeroes.toArray(new String[0]));
+        int result = JOptionPane.showConfirmDialog(null, heroDropdown, 
+                "Select a Dota 2 Melee Hero to Add", JOptionPane.OK_CANCEL_OPTION);
+    
+        if (result == JOptionPane.OK_OPTION) {
+            String selectedHero = (String) heroDropdown.getSelectedItem();
+    
+            if (selectedHero != null && !selectedHero.trim().isEmpty()) {
+                if (!list.contains(selectedHero)) {
+                    list.add(selectedHero);
+                    listModel.addElement(selectedHero);
+                    JOptionPane.showMessageDialog(null, "Successfully added: " + selectedHero);
                 } else {
                     JOptionPane.showMessageDialog(null, "This hero already exists in the list!");
                 }
             } else {
-                JOptionPane.showMessageDialog(null, "Invalid hero name! Please enter a valid Dota 2 hero.");
+                JOptionPane.showMessageDialog(null, "Invalid selection.");
             }
         }
     }
@@ -113,29 +124,41 @@ public class CRUDApp {
     public static void updateItem() {
         String selectedItem = jList.getSelectedValue();
         if (selectedItem != null) {
-            String updatedItem = JOptionPane.showInputDialog("Update hero name:", selectedItem);
-            if (updatedItem != null && !updatedItem.trim().isEmpty()) {
-                updatedItem = capitalizeFirstLetter(updatedItem.trim());
-                if (validHeroes.contains(updatedItem) && !list.contains(updatedItem)) {
+            List<String> meleeHeroes = Arrays.asList(
+                    "Axe", "Juggernaut", "Pudge", "Anti-Mage", "Slark", "Sven",
+                    "Phantom Assassin", "Ursa", "Wraith King", "Troll Warlord"
+            );
+    
+            JComboBox<String> heroDropdown = new JComboBox<>(meleeHeroes.toArray(new String[0]));
+            heroDropdown.setSelectedItem(selectedItem); // Pre-select current hero
+            int result = JOptionPane.showConfirmDialog(null, heroDropdown,
+                    "Update hero name:", JOptionPane.OK_CANCEL_OPTION);
+    
+            if (result == JOptionPane.OK_OPTION) {
+                String updatedItem = (String) heroDropdown.getSelectedItem();
+                if (!list.contains(updatedItem)) {
                     int selectedIndex = jList.getSelectedIndex();
                     list.set(selectedIndex, updatedItem);
                     listModel.set(selectedIndex, updatedItem);
-
+    
+                    // Transfer inventory and damage data to the updated hero name
                     heroInventory.put(updatedItem, heroInventory.getOrDefault(selectedItem, new ArrayList<>()));
-                    heroDamage.put(updatedItem, heroDamage.getOrDefault(selectedItem, 0));
-
+                    heroDamage.put(updatedItem, heroDamage.getOrDefault(selectedItem, 10));
+    
+                    // Remove old hero data
                     heroInventory.remove(selectedItem);
                     heroDamage.remove(selectedItem);
-
+    
                     JOptionPane.showMessageDialog(null, "Successfully updated to: " + updatedItem);
                 } else {
-                    JOptionPane.showMessageDialog(null, "Invalid or duplicate hero name.");
+                    JOptionPane.showMessageDialog(null, "This hero already exists in the list!");
                 }
             }
         } else {
-            JOptionPane.showMessageDialog(null, "Please select an item to update.");
+            JOptionPane.showMessageDialog(null, "Please select a hero to update.");
         }
     }
+    
 
     public static void buyItem() {
         String selectedHero = jList.getSelectedValue();
@@ -144,23 +167,25 @@ public class CRUDApp {
             String selectedItem = (String) JOptionPane.showInputDialog(null,
                     "Select an item to buy:", "Buy Items",
                     JOptionPane.QUESTION_MESSAGE, null, itemArray, itemArray[0]);
-
+    
             if (selectedItem != null) {
                 heroInventory.putIfAbsent(selectedHero, new ArrayList<>());
-                heroInventory.get(selectedHero).add(selectedItem.toLowerCase()); // Convert to lowercase
-
+                heroInventory.get(selectedHero).add(selectedItem.toLowerCase()); // Add item to inventory
+    
+                // Apply only physical damage to hero
                 int itemDamage = dotaItems.get(selectedItem);
                 int currentDamage = heroDamage.getOrDefault(selectedHero, 10);
                 heroDamage.put(selectedHero, currentDamage + itemDamage);
-
+    
                 JOptionPane.showMessageDialog(null,
-                        selectedHero + " bought: " + selectedItem + " (+" + itemDamage + " damage)\n" +
+                        selectedHero + " bought: " + selectedItem + " (+" + itemDamage + " physical damage)\n" +
                                 "Total Damage: " + heroDamage.get(selectedHero));
             }
         } else {
             JOptionPane.showMessageDialog(null, "Please select a hero to buy items.");
         }
     }
+    
 
     public static void versusMode() {
         List<String> selectedHeroes = jList.getSelectedValuesList();
@@ -325,74 +350,60 @@ protected void paintComponent(Graphics g) {
     }
 }
 
-        private void drawHero(Graphics g, int x, int y, String hero, Color color) {
-            g.setColor(color);
-            g.fillOval(x - 10, y - 50, 20, 20);
-            g.drawLine(x, y - 30, x, y);
-            g.drawLine(x, y, x - 20, y + 30);
-            g.drawLine(x, y, x + 20, y + 30);
-            g.drawLine(x, y - 20, x - 20, y - 10);
-            g.drawLine(x, y - 20, x + 20, y - 10);
-        
-            // Get the first item bought by the hero
-            ArrayList<String> items = heroInventory.getOrDefault(hero, new ArrayList<>());
-        
-            if (!items.isEmpty()) {
-                // Display item name instead of hero name
-                String firstItem = capitalizeFirstLetter(items.get(0)); // Capitalize item name
-                g.setColor(Color.BLACK);
-                g.drawString(firstItem, x - 15, y + 45); // Show item name
-            } else {
-                // If no item, show "No Items"
-                g.setColor(Color.GRAY);
-                g.drawString("No Items", x - 20, y + 45);
-            }
-        }
+private void drawHero(Graphics g, int x, int y, String hero, Color color) {
+    g.setColor(color);
+    g.fillOval(x - 10, y - 50, 20, 20); // Hero head
+    g.drawLine(x, y - 30, x, y); // Body
+    g.drawLine(x, y, x - 20, y + 30); // Left leg
+    g.drawLine(x, y, x + 20, y + 30); // Right leg
+    g.drawLine(x, y - 20, x - 20, y - 10); // Left arm
+    g.drawLine(x, y - 20, x + 20, y - 10); // Right arm
+}
 
         private void drawDust(Graphics g, int x) {
             g.setColor(Color.LIGHT_GRAY);
             g.fillOval(x - 20, 150 - 20, 40, 40);
         }
 
-        private void startBattle() {
-            Timer attackTimer = new Timer(500, new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    if (random.nextBoolean()) {
-                        startAttackAnimation(true);
-                        damage1 = random.nextInt(10);
-                        if (damage1 == 0) {
-                            showDamageText(false, "-0"); // Miss
-                        } else {
-                            hero2HP -= damage1;
-                            showDamageText(false, "-" + damage1);
-                        }
-                        if (hero2HP <= 0) {
-                            hero2HP = 0;
-                            ((Timer) e.getSource()).stop();
-                            showResult(hero1, hero1HP);
-                        }
-                    } else {
-                        startAttackAnimation(false);
-                        damage2 = random.nextInt(10);
-                        if (damage2 == 0) {
-                            showDamageText(true, "-0"); // Miss
-                        } else {
-                            hero1HP -= damage2;
-                            showDamageText(true, "-" + damage2);
-                        }
-                        if (hero1HP <= 0) {
-                            hero1HP = 0;
-                            ((Timer) e.getSource()).stop();
-                            showResult(hero2, hero2HP);
-                        }
-                    }
-                    repaint();
+    private void startBattle() {
+    Timer attackTimer = new Timer(500, new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            if (random.nextBoolean()) {
+                startAttackAnimation(true);
+                damage1 = random.nextInt(10);
+                if (damage1 == 0) {
+                    showDamageText(false, "-0"); // Miss
+                } else {
+                    hero2HP -= damage1;
+                    showDamageText(false, "-" + damage1);
                 }
-            });
-            attackTimer.start();
+                if (hero2HP <= 0) {
+                    hero2HP = 0;
+                    ((Timer) e.getSource()).stop();
+                    showResult(hero1, hero1HP);
+                }
+            } else {
+                startAttackAnimation(false);
+                damage2 = random.nextInt(10);
+                if (damage2 == 0) {
+                    showDamageText(true, "-0"); // Miss
+                } else {
+                    hero1HP -= damage2;
+                    showDamageText(true, "-" + damage2);
+                }
+                if (hero1HP <= 0) {
+                    hero1HP = 0;
+                    ((Timer) e.getSource()).stop();
+                    showResult(hero2, hero2HP);
+                }
+            }
+            repaint();
         }
-        
+    });
+    attackTimer.start();
+}
+
         private void startAttackAnimation(boolean isHero1) {
             Timer punchTimer = new Timer(100, new ActionListener() {
                 int punchCount = 0;
@@ -467,7 +478,82 @@ protected void paintComponent(Graphics g) {
         private void showResult(String winner, int hp) {
             String result = winner + " wins with " + hp + "% HP remaining!";
             JOptionPane.showMessageDialog(null, result);
+        
+            int choice = JOptionPane.showConfirmDialog(null,
+                    "Do you want to continue fighting with " + winner + "?",
+                    "Continue Battle?", JOptionPane.YES_NO_OPTION);
+        
+            if (choice == JOptionPane.YES_OPTION) {
+                continueFight(winner, hp);
+            } else {
                 JOptionPane.showMessageDialog(null, "Battle ended. Thanks for playing!");
             }
-        }    
+        }
+
+        private void continueFight(String winner, int hp) {
+            // Get list of all available heroes except the winner
+            List<String> availableHeroes = new ArrayList<>(list);
+            availableHeroes.remove(winner);
+        
+            if (availableHeroes.isEmpty()) {
+                JOptionPane.showMessageDialog(null, "No other heroes left to fight! Battle ends.");
+                return;
+            }
+        
+            // Select a new opponent for the winner
+            String newOpponent = (String) JOptionPane.showInputDialog(null,
+                    "Select a new opponent for " + winner + ":",
+                    "Continue Fighting",
+                    JOptionPane.QUESTION_MESSAGE,
+                    null,
+                    availableHeroes.toArray(),
+                    availableHeroes.get(0));
+        
+            // Check if a new opponent was selected
+            if (newOpponent != null) {
+                int winnerDamage = heroDamage.getOrDefault(winner, 10);
+                int opponentDamage = heroDamage.getOrDefault(newOpponent, 10);
+        
+                // Remove the selected opponent from the list of available heroes
+                list.remove(newOpponent);
+        
+                // Start a new battle and pass remaining HP of the winner
+                SwingUtilities.invokeLater(() -> 
+                    showBattleAnimationWithHP(winner, newOpponent, winnerDamage, opponentDamage, hp)
+                );
+            } else {
+                JOptionPane.showMessageDialog(null, "No opponent selected. Battle ends.");
+            }
+        }
+
+        public static void showBattleAnimationWithHP(String hero1, String hero2, int damage1, int damage2, int hero1HP) {
+            JFrame battleFrame = new JFrame("Hero Battle!");
+            battleFrame.setSize(600, 300);
+            battleFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+            BattlePanel battlePanel = new BattlePanel(hero1, hero2, damage1, damage2, hero1HP);
+            battleFrame.add(battlePanel);
+            battleFrame.setVisible(true);
+        }
+
+        public BattlePanel(String hero1, String hero2, int damage1, int damage2, int hero1HP) {
+    this.hero1 = hero1;
+    this.hero2 = hero2;
+    this.damage1 = damage1;
+    this.damage2 = damage2;
+    this.hero1HP = hero1HP; // Carry over winning HP
+    this.hero2HP = 100; // New opponent starts with full HP
+
+    Timer timer = new Timer(200, e -> {
+        hero1X += 10;
+        hero2X -= 10;
+
+        if (hero1X >= 250 || hero2X <= 250) {
+            ((Timer) e.getSource()).stop();
+            startBattle();
+        }
+        repaint();
+    });
+    timer.start();
+}
+    }
 }
