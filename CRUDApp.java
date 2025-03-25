@@ -8,6 +8,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import array_list.createUi;
+
 
 public class CRUDApp {
     private static ArrayList<String> list = new ArrayList<>();
@@ -16,6 +18,7 @@ public class CRUDApp {
     private static Map<String, Integer> dotaItems = new HashMap<>();
     private static Map<String, ArrayList<String>> heroInventory = new HashMap<>();
     private static Map<String, Integer> heroDamage = new HashMap<>();
+    private static Map<String, String> dotaItemEffects = new HashMap<>();
 
     public static void main(String[] args) {
         // Start with an empty list (no heroes added initially)
@@ -26,59 +29,45 @@ public class CRUDApp {
             if (list.isEmpty()) {
                 JOptionPane.showMessageDialog(null, "No hero added yet!");
             }
-            createUI();
-        });
-    }
     
-    public static void createUI() {
-        JFrame frame = new JFrame("CRUD Application - Dota 2 Heroes");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(500, 350);
-
-        frame.setLayout(new BorderLayout());
-        listModel.clear();
-        for (String item : list) {
-            listModel.addElement(item);
-        }
-
-        JScrollPane scrollPane = new JScrollPane(jList);
-        frame.add(scrollPane, BorderLayout.CENTER);
-
-        JPanel buttonPanel = new JPanel();
-        buttonPanel.setLayout(new FlowLayout());
-
-        JButton addButton = new JButton("Add");
-        JButton deleteButton = new JButton("Delete");
-        JButton updateButton = new JButton("Update");
-        JButton versusButton = new JButton("Versus Mode");
-        JButton buyItemButton = new JButton("Buy Items");
-
-        buttonPanel.add(addButton);
-        buttonPanel.add(deleteButton);
-        buttonPanel.add(updateButton);
-        buttonPanel.add(versusButton);
-        buttonPanel.add(buyItemButton);
-
-        frame.add(buttonPanel, BorderLayout.SOUTH);
-
-        addButton.addActionListener(e -> addItem());
-        deleteButton.addActionListener(e -> deleteItem());
-        updateButton.addActionListener(e -> updateItem());
-        versusButton.addActionListener(e -> versusMode());
-        buyItemButton.addActionListener(e -> buyItem());
-
-        frame.setVisible(true);
+            // Correctly call createUi.createUI() and pass the required parameters
+            createUi.createUI(
+                listModel, jList,
+                e -> addItem(),
+                e -> deleteItem(),
+                e -> updateItem(),
+                e -> versusMode(),
+                e -> buyItem(),
+                e -> deleteBuyItem(),
+                e -> viewBoughtItems()
+            );
+        }); 
     }
-
+        
     public static void initializeItems() {
         dotaItems.put("Desolator", 40);     
-        dotaItems.put("Daedalus", 60);       // Critical damage
+        dotaItemEffects.put("Desolator", "Reduces enemy armor on hit by 6 for 7 seconds.");
+    
+        dotaItems.put("Daedalus", 60);       
+        dotaItemEffects.put("Daedalus", "Grants a 30% chance to deal critical damage (2.4x damage).");
+    
         dotaItems.put("Monkey King Bar", 45); 
+        dotaItemEffects.put("Monkey King Bar", "Grants a 75% chance to pierce evasion and deal bonus damage.");
+    
         dotaItems.put("Divine Rapier", 100);
+        dotaItemEffects.put("Divine Rapier", "Grants massive damage but drops on death.");
+    
         dotaItems.put("Crystalys", 30);    
+        dotaItemEffects.put("Crystalys", "Grants a 20% chance to deal critical damage (1.75x damage).");
+    
         dotaItems.put("Battle Fury", 50);
+        dotaItemEffects.put("Battle Fury", "Cleave attack deals 70% of your attack damage to nearby enemies.");
+    
         dotaItems.put("Satanic", 50);
+        dotaItemEffects.put("Satanic", "Grants 25% lifesteal and can activate to temporarily gain 175% lifesteal for 6 seconds.");
+    
         dotaItems.put("Eye of The Skadi", 50);  
+        dotaItemEffects.put("Eye of The Skadi", "Slows enemy movement and attack speed by 35% on hit.");
     }
 
     public static void addItem() {
@@ -107,6 +96,78 @@ public class CRUDApp {
             }
         }
     }
+
+    public static void viewBoughtItems() {
+        String selectedHero = jList.getSelectedValue();
+        if (selectedHero != null) {
+            ArrayList<String> inventory = heroInventory.getOrDefault(selectedHero, new ArrayList<>());
+    
+            if (inventory.isEmpty()) {
+                JOptionPane.showMessageDialog(null, selectedHero + " has no items.");
+            } else {
+                StringBuilder itemList = new StringBuilder(selectedHero + "'s Items:\n");
+                for (String item : inventory) {
+                    int itemDamage = dotaItems.getOrDefault(item, 0);   
+                    String itemEffect = dotaItemEffects.getOrDefault(item, "No effect.");
+    
+                    itemList.append("- ").append(item)
+                            .append(" (").append(itemDamage).append(" damage)\n")
+                            .append("  Effect: ").append(itemEffect).append("\n\n");
+                }
+                JOptionPane.showMessageDialog(null, itemList.toString());
+            }
+        } else {
+            JOptionPane.showMessageDialog(null, "Please select a hero to view items.");
+        }
+    }
+    
+
+
+    public static void deleteBuyItem() {
+        String selectedHero = jList.getSelectedValue();
+        if (selectedHero != null) {
+            ArrayList<String> inventory = heroInventory.getOrDefault(selectedHero, new ArrayList<>());
+    
+            if (inventory.isEmpty()) {
+                JOptionPane.showMessageDialog(null, selectedHero + " has no items to delete.");
+                return;
+            }
+    
+            // Show a list of items to delete
+            Object[] itemArray = inventory.toArray();
+            String selectedItem = (String) JOptionPane.showInputDialog(
+                    null,
+                    "Select an item to delete:",
+                    "Delete Buy Item",
+                    JOptionPane.QUESTION_MESSAGE,
+                    null,
+                    itemArray,
+                    itemArray[0]
+            );
+    
+            if (selectedItem != null) {
+                inventory.remove(selectedItem); // ✅ Correctly remove the item
+    
+                // Deduct damage from the hero
+                int itemDamage = dotaItems.getOrDefault(selectedItem, 0);  // ✅ Correct reference
+                int currentDamage = heroDamage.getOrDefault(selectedHero, 10);
+                heroDamage.put(selectedHero, Math.max(10, currentDamage - itemDamage));
+    
+                // Get the item effect
+                String itemEffect = dotaItemEffects.getOrDefault(selectedItem, "No effect.");
+    
+                JOptionPane.showMessageDialog(null,
+                        selectedHero + " deleted: " + selectedItem + " (-" + itemDamage + " physical damage)\n" +
+                                "Effect Removed: " + itemEffect + "\n" +
+                                "Total Damage: " + heroDamage.get(selectedHero));
+            }
+        } else {
+            JOptionPane.showMessageDialog(null, "Please select a hero to delete a bought item.");
+        }
+    }
+    
+
+    
 
     public static void deleteItem() {
         String itemToDelete = jList.getSelectedValue();
@@ -170,15 +231,26 @@ public class CRUDApp {
     
             if (selectedItem != null) {
                 heroInventory.putIfAbsent(selectedHero, new ArrayList<>());
-                heroInventory.get(selectedHero).add(selectedItem.toLowerCase()); // Add item to inventory
     
-                // Apply only physical damage to hero
-                int itemDamage = dotaItems.get(selectedItem);
+                // Check if the item is already bought (case-sensitive)
+                if (heroInventory.get(selectedHero).contains(selectedItem)) {
+                    JOptionPane.showMessageDialog(null, selectedHero + " already owns " + selectedItem + ".");
+                    return;
+                }
+    
+                heroInventory.get(selectedHero).add(selectedItem); // ✅ Store the item with original name
+    
+                // Apply physical damage to hero
+                int itemDamage = dotaItems.getOrDefault(selectedItem, 0);  // ✅ Correct item reference
                 int currentDamage = heroDamage.getOrDefault(selectedHero, 10);
                 heroDamage.put(selectedHero, currentDamage + itemDamage);
     
+                // Get the item effect
+                String itemEffect = dotaItemEffects.getOrDefault(selectedItem, "No effect.");
+    
                 JOptionPane.showMessageDialog(null,
                         selectedHero + " bought: " + selectedItem + " (+" + itemDamage + " physical damage)\n" +
+                                "Effect: " + itemEffect + "\n" +
                                 "Total Damage: " + heroDamage.get(selectedHero));
             }
         } else {
@@ -468,92 +540,11 @@ private void drawHero(Graphics g, int x, int y, String hero, Color color) {
             fadeTimer.start();
         }
 
-        public static String capitalizeFirstLetter(String input) {
-            if (input == null || input.isEmpty()) {
-                return input;
-            }
-            return input.substring(0, 1).toUpperCase() + input.substring(1).toLowerCase();
-        }
 
         private void showResult(String winner, int hp) {
             String result = winner + " wins with " + hp + "% HP remaining!";
             JOptionPane.showMessageDialog(null, result);
-        
-            int choice = JOptionPane.showConfirmDialog(null,
-                    "Do you want to continue fighting with " + winner + "?",
-                    "Continue Battle?", JOptionPane.YES_NO_OPTION);
-        
-            if (choice == JOptionPane.YES_OPTION) {
-                continueFight(winner, hp);
-            } else {
                 JOptionPane.showMessageDialog(null, "Battle ended. Thanks for playing!");
             }
         }
-
-        private void continueFight(String winner, int hp) {
-            // Get list of all available heroes except the winner
-            List<String> availableHeroes = new ArrayList<>(list);
-            availableHeroes.remove(winner);
-        
-            if (availableHeroes.isEmpty()) {
-                JOptionPane.showMessageDialog(null, "No other heroes left to fight! Battle ends.");
-                return;
-            }
-        
-            // Select a new opponent for the winner
-            String newOpponent = (String) JOptionPane.showInputDialog(null,
-                    "Select a new opponent for " + winner + ":",
-                    "Continue Fighting",
-                    JOptionPane.QUESTION_MESSAGE,
-                    null,
-                    availableHeroes.toArray(),
-                    availableHeroes.get(0));
-        
-            // Check if a new opponent was selected
-            if (newOpponent != null) {
-                int winnerDamage = heroDamage.getOrDefault(winner, 10);
-                int opponentDamage = heroDamage.getOrDefault(newOpponent, 10);
-        
-                // Remove the selected opponent from the list of available heroes
-                list.remove(newOpponent);
-        
-                // Start a new battle and pass remaining HP of the winner
-                SwingUtilities.invokeLater(() -> 
-                    showBattleAnimationWithHP(winner, newOpponent, winnerDamage, opponentDamage, hp)
-                );
-            } else {
-                JOptionPane.showMessageDialog(null, "No opponent selected. Battle ends.");
-            }
-        }
-
-        public static void showBattleAnimationWithHP(String hero1, String hero2, int damage1, int damage2, int hero1HP) {
-            JFrame battleFrame = new JFrame("Hero Battle!");
-            battleFrame.setSize(600, 300);
-            battleFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-            BattlePanel battlePanel = new BattlePanel(hero1, hero2, damage1, damage2, hero1HP);
-            battleFrame.add(battlePanel);
-            battleFrame.setVisible(true);
-        }
-
-        public BattlePanel(String hero1, String hero2, int damage1, int damage2, int hero1HP) {
-    this.hero1 = hero1;
-    this.hero2 = hero2;
-    this.damage1 = damage1;
-    this.damage2 = damage2;
-    this.hero1HP = hero1HP; // Carry over winning HP
-    this.hero2HP = 100; // New opponent starts with full HP
-
-    Timer timer = new Timer(200, e -> {
-        hero1X += 10;
-        hero2X -= 10;
-
-        if (hero1X >= 250 || hero2X <= 250) {
-            ((Timer) e.getSource()).stop();
-            startBattle();
-        }
-        repaint();
-    });
-    timer.start();
-}
     }
-}
