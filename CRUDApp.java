@@ -1,660 +1,698 @@
-import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
-import java.util.HashMap;
-import java.util.Map;
+import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.security.SecureRandom;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.AlgorithmParameterSpec;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.KeySpec;
+import java.util.Base64;
+import javax.crypto.*;
+import javax.crypto.spec.PBEKeySpec;
+import javax.crypto.spec.PBEParameterSpec;
 
 
-public class CRUDApp {
-    private static ArrayList<String> list = new ArrayList<>();
-    private static DefaultListModel<String> listModel = new DefaultListModel<>();
-    private static JList<String> jList = new JList<>(listModel);
-    private static Map<String, Integer> dotaItems = new HashMap<>();
-    private static Map<String, ArrayList<String>> heroInventory = new HashMap<>();
-    private static Map<String, Integer> heroDamage = new HashMap<>();
-    private static Map<String, String> dotaItemEffects = new HashMap<>();
-
-    public static void main(String[] args) {
-        // Start with an empty list (no heroes added initially)
-        list.clear(); // Clear any pre-existing data (optional safety)
-    
-        initializeItems();
-        SwingUtilities.invokeLater(() -> {
-            if (list.isEmpty()) {
-                JOptionPane.showMessageDialog(null, "No hero added yet!");
-            }
-            createUI();
-        });
+// This class is used to create a loading screen
+class SplashScreen {
+    JFrame frame;
+    JLabel image=new JLabel(new ImageIcon("key-lock.png"));
+    JLabel text=new JLabel("PASSWORD & NOTES MANAGER");
+    JProgressBar progressBar=new JProgressBar();
+    JLabel message=new JLabel();
+    SplashScreen()
+    {
+        createGUI();
+        addImage();
+        addText();
+        addProgressBar();
+        runningPBar();
     }
-    
-    public static void createUI() {
-        JFrame frame = new JFrame("CRUD Application - Dota 2 Heroes");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(800, 350);
 
-        frame.setLayout(new BorderLayout());
-        listModel.clear();
-        for (String item : list) {
-            listModel.addElement(item);
-        }
-
-        JScrollPane scrollPane = new JScrollPane(jList);
-        frame.add(scrollPane, BorderLayout.CENTER);
-
-        JPanel buttonPanel = new JPanel();
-        buttonPanel.setLayout(new FlowLayout());
-        
-        
-        JButton addButton = new JButton("Add Hero");
-        JButton deleteButton = new JButton("Delete Hero");
-        JButton updateButton = new JButton("Update Hero");
-        JButton versusButton = new JButton("Versus Mode");
-        JButton buyItemButton = new JButton("Buy Items");
-        JButton deleteBuyItemButton = new JButton("Delete Buy Item");
-        JButton viewItemsButton = new JButton("View Items");
-
-        buttonPanel.add(addButton);
-        buttonPanel.add(deleteButton);
-        buttonPanel.add(updateButton);
-        buttonPanel.add(versusButton);
-        buttonPanel.add(buyItemButton);
-        buttonPanel.add(deleteBuyItemButton);
-        buttonPanel.add(viewItemsButton);
-        
-
-        frame.add(buttonPanel, BorderLayout.SOUTH);
-
-        addButton.addActionListener(e -> addItem());
-        deleteButton.addActionListener(e -> deleteItem());
-        updateButton.addActionListener(e -> updateItem());
-        versusButton.addActionListener(e -> versusMode());
-        buyItemButton.addActionListener(e -> buyItem());
-        deleteBuyItemButton.addActionListener(e -> deleteBuyItem());
-        viewItemsButton.addActionListener(e -> viewBoughtItems());
+    public void createGUI(){
+        frame=new JFrame(); // to create a frame
+        frame.getContentPane().setLayout(null); // to set the layout of the frame
+        frame.setUndecorated(true);
+        frame.setSize(400,400); // to set the size of the frame
+        frame.setLocationRelativeTo(null);
+        frame.getContentPane().setBackground(new Color(0XFF8787)); // to set the background color of the frame
         frame.setVisible(true);
     }
 
-    public static void initializeItems() {
-        dotaItems.put("Desolator", 40);     
-        dotaItemEffects.put("Desolator", "Reduces enemy armor on hit by 6 for 7 seconds.");
+    public void addImage(){
+        image.setSize(400,200); // to set the size of the image
+        frame.add(image);
+    }
     
-        dotaItems.put("Daedalus", 60);       
-        dotaItemEffects.put("Daedalus", "Grants a 30% chance to deal critical damage (2.4x damage).");
+    public void addText()
+    {
+        text.setFont(new Font("MV Boli",Font.BOLD,20)); // to set the font of the text
+        text.setBounds(30,200,400,30);
+        text.setForeground(Color.black);
+        frame.add(text);
+    }
     
-        dotaItems.put("Monkey King Bar", 45); 
-        dotaItemEffects.put("Monkey King Bar", "Grants a 75% chance to pierce evasion and deal bonus damage.");
-    
-        dotaItems.put("Divine Rapier", 100);
-        dotaItemEffects.put("Divine Rapier", "Grants massive damage but drops on death.");
-    
-        dotaItems.put("Crystalys", 30);    
-        dotaItemEffects.put("Crystalys", "Grants a 20% chance to deal critical damage (1.75x damage).");
-    
-        dotaItems.put("Battle Fury", 50);
-        dotaItemEffects.put("Battle Fury", "Cleave attack deals 70% of your attack damage to nearby enemies.");
-    
-        dotaItems.put("Satanic", 50);
-        dotaItemEffects.put("Satanic", "Grants 25% lifesteal and can activate to temporarily gain 175% lifesteal for 6 seconds.");
-    
-        dotaItems.put("Eye of The Skadi", 50);  
-        dotaItemEffects.put("Eye of The Skadi", "Slows enemy movement and attack speed by 35% on hit.");
+    public void addProgressBar(){
+        progressBar.setBounds(100,280,200,30); // to set the size of the progress bar
+        progressBar.setBorderPainted(true);
+        progressBar.setStringPainted(true);
+        progressBar.setBackground(Color.black);
+        progressBar.setForeground(new Color(0X38E54D));
+        progressBar.setValue(0);
+        frame.add(progressBar);
+    }
+    public void runningPBar(){
+        int i=0;//Creating an integer variable and initializing it to 0
+        while( i<=100)
+        {
+            try{
+                Thread.sleep(40);   //Pausing execution for 50 milliseconds
+                progressBar.setValue(i);    //Setting value of Progress Bar
+                i++;
+                if(i==100)
+                    frame.dispose();
+            }catch(Exception e){
+                e.printStackTrace();
+            }
+        }
+    }
+}
+
+//Linear Probing Implementation
+class HashtablePassword implements hashTableMap {
+    private final int useProbe;    //0 = Linear Probing, 1 = Quadratic Probing
+    private Entry[] entries;       //The array of entries
+    private final float loadFactor;     //The load factor
+    private int size, used;         //used acquires space for NIL
+    private final Entry NIL = new Entry(null, null); //Deleted entries
+
+    private static class Entry{
+        Object key, value;
+        Entry(Object k, Object v){
+            key = k;    value = v;
+        }
+    }
+    public HashtablePassword(int capacity, float loadFactor, int useProbe){
+        entries = new Entry[capacity];
+        this.loadFactor = loadFactor;
+        this.useProbe = useProbe;
     }
 
-    public static void addItem() {
-        List<String> meleeHeroes = Arrays.asList(
-                "Axe", "Juggernaut", "Pudge", "Anti-Mage", "Slark", "Sven", 
-                "Phantom Assassin", "Ursa", "Wraith King", "Troll Warlord"
+
+    //Complementary functions
+    public int hash(Object key){
+        return (key.hashCode() & 0x7FFFFFFF) % entries.length;
+    }
+
+    private int nextProbe(int h, int i){
+        return (h+i) % entries.length;  //Linear Probing
+    }
+
+    private void rehash(){ 
+        Entry[] oldEntries = entries;
+        entries = new Entry[2*entries.length+1];
+        for (Entry entry : oldEntries) {
+            if (entry == NIL || entry == null) continue;
+            int h = hash(entry.key);
+            for (int x = 0; x < entries.length; x++) {
+                int j = nextProbe(h, x);
+                if (entries[j] == null) {
+                    entries[j] = entry;
+                    break;
+                }
+            }
+            used = size;
+        }
+    }
+
+    @Override
+    public int add_Acc(Object Account, Object passwd) {
+        if(used > (loadFactor*entries.length))rehash();
+        int h = hash(Account);
+        for (int i = 0; i < entries.length; i++){
+            int j = (h+i) % entries.length;
+            Entry entry = entries[j];
+            if(entry==null){
+                entries[j]= new Entry(Account, passwd);
+                ++size;
+                ++used;
+                return h;
+            }
+            if(entry == NIL)continue;
+            if(entry.key.equals(Account)){
+                Object oldValue = entry.value;
+                entries[j].value = passwd;
+                return (int) oldValue;
+            }
+        }
+        return h;
+    }
+
+    @Override
+    public Object get_Acc(Object Account) {
+        int h = hash(Account);
+        for(int i = 0; i < entries.length; i++){
+            int j = nextProbe(h , i);
+            Entry entry = entries[j];
+            if(entry == null)break;
+            if(entry == NIL)continue;
+            if(entry.key.equals(Account)) return entry.value;
+        }
+        return null;
+    }
+
+    @Override
+    public Object remove_Acc(Object Account) {
+        int h = hash(Account);
+        for(int i = 0; i < entries.length; i++){
+            int j = nextProbe(h,i);
+            Entry entry = entries[j];
+            if(entry == NIL)continue;
+            if(entry.key.equals(Account)){
+                Object Value = entry.value;
+                entries[j] = NIL;
+                size--;
+                return Value;
+            }
+        }
+        return null;
+    }
+}
+class CryptoUtil 
+{
+
+    Cipher ecipher;
+    Cipher dcipher;
+    // 8-byte Salt
+    byte[] salt = {
+        (byte) 0xA9, (byte) 0x9B, (byte) 0xC8, (byte) 0x32,
+        (byte) 0x56, (byte) 0x35, (byte) 0xE3, (byte) 0x03
+    };
+    // Iteration count
+    int iterationCount = 19;
+
+    public CryptoUtil() {
+
+    }
+
+    /**
+     *
+     * @param secretKey Key used to encrypt data
+     * @param plainText Text input to be encrypted
+     * @return Returns encrypted text
+     * @throws java.security.NoSuchAlgorithmException
+     * @throws java.security.spec.InvalidKeySpecException
+     * @throws javax.crypto.NoSuchPaddingException
+     * @throws java.security.InvalidKeyException
+     * @throws java.security.InvalidAlgorithmParameterException
+     * @throws java.io.UnsupportedEncodingException
+     * @throws javax.crypto.IllegalBlockSizeException
+     * @throws javax.crypto.BadPaddingException
+     *
+     */
+    public String encrypt(String secretKey, String plainText)
+            throws NoSuchAlgorithmException,
+            InvalidKeySpecException,
+            NoSuchPaddingException,
+            InvalidKeyException,
+            InvalidAlgorithmParameterException,
+            UnsupportedEncodingException,
+            IllegalBlockSizeException,
+            BadPaddingException {
+        //Key generation for enc and desc
+        KeySpec keySpec = new PBEKeySpec(secretKey.toCharArray(), salt, iterationCount);
+        SecretKey key = SecretKeyFactory.getInstance("PBEWithMD5AndDES").generateSecret(keySpec);
+        // Prepare the parameter to the ciphers
+        AlgorithmParameterSpec paramSpec = new PBEParameterSpec(salt, iterationCount);
+
+        //Enc process
+        ecipher = Cipher.getInstance(key.getAlgorithm());
+        ecipher.init(Cipher.ENCRYPT_MODE, key, paramSpec);
+        String charSet = "UTF-8";
+        byte[] in = plainText.getBytes(charSet);
+        byte[] out = ecipher.doFinal(in);
+        String encStr = new String(Base64.getEncoder().encode(out));
+        return encStr;
+    }
+
+    /**
+     * @param secretKey Key used to decrypt data
+     * @param encryptedText encrypted text input to decrypt
+     * @return Returns plain text after decryption
+     * @throws java.security.NoSuchAlgorithmException
+     * @throws java.security.spec.InvalidKeySpecException
+     * @throws javax.crypto.NoSuchPaddingException
+     * @throws java.security.InvalidKeyException
+     * @throws java.security.InvalidAlgorithmParameterException
+     * @throws java.io.UnsupportedEncodingException
+     * @throws javax.crypto.IllegalBlockSizeException
+     * @throws javax.crypto.BadPaddingException
+     */
+    public String decrypt(String secretKey, String encryptedText)
+            throws NoSuchAlgorithmException,
+            InvalidKeySpecException,
+            NoSuchPaddingException,
+            InvalidKeyException,
+            InvalidAlgorithmParameterException,
+            UnsupportedEncodingException,
+            IllegalBlockSizeException,
+            BadPaddingException,
+            IOException {
+        //Key generation for enc and desc
+        KeySpec keySpec = new PBEKeySpec(secretKey.toCharArray(), salt, iterationCount);
+        SecretKey key = SecretKeyFactory.getInstance("PBEWithMD5AndDES").generateSecret(keySpec);
+        // Prepare the parameter to the ciphers
+        AlgorithmParameterSpec paramSpec = new PBEParameterSpec(salt, iterationCount);
+        //Decryption process; same key will be used for decr
+        dcipher = Cipher.getInstance(key.getAlgorithm());
+        dcipher.init(Cipher.DECRYPT_MODE, key, paramSpec);
+        byte[] enc = Base64.getDecoder().decode(encryptedText);
+        byte[] utf8 = dcipher.doFinal(enc);
+        String charSet = "UTF-8";
+        String plainStr = new String(utf8, charSet);
+        return plainStr;
+    }    
+   
+}
+
+class PasswordGenerator {
+    private static final SecureRandom random = new SecureRandom();
+    private static final String caps="ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    private static final String small_caps="abcdefghijklmnopqrstuvwxyz";
+    private static final String Numeric="1234567890";
+    private static final String special_char="~!@#$%^&*(_+{}|:_[?]>=<";
+    private static final String dic = caps + small_caps + Numeric + special_char;
+
+    public String generatePassword(int len) {
+        StringBuilder password= new StringBuilder();
+        for (int i = 0; i <len ; i++) {
+            int index = random.nextInt(dic.length());
+            password.append(dic.charAt(index));
+        }
+        return password.toString();
+    }
+
+}
+
+
+interface hashTableMap {
+
+    Object get_Acc(Object Account);
+    int add_Acc(Object Account, Object passwd);
+    Object remove_Acc(Object Account);
+}
+
+class PasswordManager implements ActionListener {
+
+    //Store password class reference
+    HashtablePassword data = new HashtablePassword(15,0.5F,0);
+
+    // GUI variables declaration
+    JFrame frame;
+    JFrame frame2;
+    JLabel background;
+    Container conn1,conn2;
+    JLabel lAcc,lPass;
+    JTextArea encryptPasswdArea, genePassArea, searchPassArea;
+    JButton PassGeneBtn,PassEncryptBtn, PassStoreBtn, PassSearchBtn, AccAddBtn, PassDeleteBtn;
+    JTextField tAcc,tPass;
+    JButton addNoteBtn;
+    JLabel addNoteLabel;
+    JTextArea tNote;
+    JButton addNote;
+    JFrame conn3;
+
+    ArrayList<String> notes = new ArrayList<>(); // to store the notes in an array list of string type
+
+    @Override
+    public void actionPerformed(ActionEvent e) { }
+
+    //Frame settings
+    public static void FrameGUI(JFrame frame){
+        frame.setVisible(true);
+        frame.setLayout(null);
+        frame.setLocationRelativeTo(null);
+    }
+
+
+    //container settings
+    public static void ContainerGUI(Container conn){
+        conn.setVisible(true);
+        conn.setBackground(Color.getHSBColor(20.4f, 10.5f, 12.9f));
+        conn.setLayout(null);
+    }
+
+
+    // buttons settings
+    public void GUIButtonsSetting(JButton btn){
+        btn.setBackground(new Color(0XFB2576));
+        btn.setForeground(Color.WHITE);
+        btn.setBorder(BorderFactory.createLineBorder(Color.BLACK, 3));
+        btn.setFocusable(false);
+        Cursor crs = new Cursor(Cursor.HAND_CURSOR); 
+        btn.setCursor(crs);
+        Font fn = new Font("MV Boli", Font.BOLD, 15);
+        btn.setFont(fn);
+    }
+
+    //GUI of Store password
+    public void StoringGUI()
+    {
+        frame2 = new JFrame("Store your passwords");
+        frame2.setBounds(1400, 300, 800, 500);
+        frame2.setSize(400,400);
+        FrameGUI(frame2);
+        conn2 = frame2.getContentPane();
+        ContainerGUI(conn2);
+        Font fn = new Font("MV Boli", Font.BOLD, 20);
+
+        //Account textFiled and label
+        lAcc = new JLabel("ACCOUNT NAME");
+        lAcc.setBounds(90, 23, 380, 20);
+        lAcc.setFont(fn);
+        conn2.add(lAcc);
+
+        tAcc = new JTextField();
+        tAcc.setBounds(90,70,200,50);
+        tAcc.setFont(fn);
+        tAcc.setBorder(BorderFactory.createLineBorder(Color.BLACK, 3));
+        tAcc.setForeground(Color.DARK_GRAY);
+        conn2.add(tAcc);
+
+        //Account password textField and label
+        lPass = new JLabel("ACCOUNT PASSWORD");
+        lPass.setBounds(90, 160, 380, 20);
+        lPass.setFont(fn);
+        conn2.add(lPass);
+
+        tPass = new JTextField();
+        tPass.setBounds(90,200,200,50);
+        tPass.setFont(fn);
+        tPass.setBorder(BorderFactory.createLineBorder(Color.BLACK, 3));
+        tPass.setForeground(Color.DARK_GRAY);
+        conn2.add(tPass);
+
+        AccAddBtn = new JButton("STORE");
+        AccAddBtn.setBounds(120, 290, 150, 50);
+        conn2.add(AccAddBtn);
+        GUIButtonsSetting(AccAddBtn);
+    }
+
+    //for password generator and encryption
+    public void textArea(String Pass,JTextArea TA){
+        TA.setText(Pass);
+        Font fn = new Font("MV Boli", Font.BOLD, 20);
+        TA.setWrapStyleWord(true);
+        TA.setLineWrap(true);
+        TA.setCaretPosition(0);
+        TA.setEditable(false);
+        TA.setFont(fn);
+
+    }
+
+    //GUI of Password Manager
+    PasswordManager() {
+
+        frame = new JFrame("Password Manager");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize(400,650);
+        frame.setResizable(false);
+        ImageIcon img = new ImageIcon("background.png");
+        background = new JLabel("",img,JLabel.CENTER);
+        background.setBounds(0,0,400,650);
+        background.setVisible(true);
+        frame.add(background);
+    
+        FrameGUI(frame);
+
+        conn1 = frame.getContentPane();
+        ContainerGUI(conn1);
+
+        //Generator buttons settings
+        PassGeneBtn = new JButton("GENERATE PASSWORD");
+        PassGeneBtn.setBounds(90, 20, 220, 40);
+        conn1.add(PassGeneBtn);
+        GUIButtonsSetting(PassGeneBtn);
+
+        //generating password
+        PassGeneBtn.addActionListener(e -> {
+        if(PassGeneBtn ==e.getSource())
+        {
+            try{
+                int len = Integer.parseInt(JOptionPane.showInputDialog("Enter the password length"));
+                if(len>4)
+                {
+                    //  password generator class reference
+                    PasswordGenerator pass = new PasswordGenerator();
+                    String passwd = pass.generatePassword(len);
+                    genePassArea = new JTextArea(5,4);
+                    textArea(passwd,genePassArea);
+                    JOptionPane.showMessageDialog(conn1,new JScrollPane(genePassArea),"Copy your password",JOptionPane.INFORMATION_MESSAGE);
+
+                }
+                else JOptionPane.showMessageDialog (conn1,"Password length must be greater than 8!","Invalid Input Error",JOptionPane.WARNING_MESSAGE);
+
+            }
+            catch(Exception ex){JOptionPane.showMessageDialog(conn1,"Write something","EXIT!",JOptionPane.ERROR_MESSAGE);}
+        }
+    }
+    );
+ 
+        // add a encryption button and action
+        JButton EncryptBtn = new JButton("ENCRYPT Text");
+        EncryptBtn.setBounds(90, 90, 220, 40);
+        conn1.add(EncryptBtn);
+        GUIButtonsSetting(EncryptBtn);
+        EncryptBtn.addActionListener(e -> {
+            if(EncryptBtn ==e.getSource())
+            {
+                try{
+                    String text = JOptionPane.showInputDialog("Enter the text to encrypt");
+                    String secretKey = JOptionPane.showInputDialog("Enter the secret key");
+                    if(text.length()>0 && secretKey.length()>0)
+                    {
+                        //  password generator class reference
+                        CryptoUtil pass1 = new CryptoUtil();
+                        String passwd = pass1.encrypt(secretKey, text); // encrypting the text
+                        genePassArea = new JTextArea(5,4); // text area for the encrypted text
+                        textArea(passwd,genePassArea); // setting the text area
+                        JOptionPane.showMessageDialog(conn1,new JScrollPane(genePassArea),"Copy your password",JOptionPane.INFORMATION_MESSAGE); // showing the encrypted text
+
+                    }
+                    else JOptionPane.showMessageDialog (conn1,"Write something","Invalid Input Error",JOptionPane.WARNING_MESSAGE);
+
+                }
+                catch(Exception ex){JOptionPane.showMessageDialog(conn1,"Write something","EXIT!",JOptionPane.ERROR_MESSAGE);}
+            }
+        }
         );
-    
-        JComboBox<String> heroDropdown = new JComboBox<>(meleeHeroes.toArray(new String[0]));
-        int result = JOptionPane.showConfirmDialog(null, heroDropdown, 
-                "Select a Dota 2 Melee Hero to Add", JOptionPane.OK_CANCEL_OPTION);
-    
-        if (result == JOptionPane.OK_OPTION) {
-            String selectedHero = (String) heroDropdown.getSelectedItem();
-    
-            if (selectedHero != null && !selectedHero.trim().isEmpty()) {
-                if (!list.contains(selectedHero)) {
-                    list.add(selectedHero);
-                    listModel.addElement(selectedHero);
-                    JOptionPane.showMessageDialog(null, "Successfully added: " + selectedHero);
-                } else {
-                    JOptionPane.showMessageDialog(null, "This hero already exists in the list!");
+
+        // add a decryption button and action
+        JButton DecryptBtn = new JButton("DECRYPT Text"); 
+        DecryptBtn.setBounds(90, 160, 220, 40);
+        conn1.add(DecryptBtn);
+        GUIButtonsSetting(DecryptBtn);
+        DecryptBtn.addActionListener(e -> {
+            if(DecryptBtn ==e.getSource())
+            {
+                try{
+                    String text = JOptionPane.showInputDialog("Enter the text to decrypt"); // getting the encrypted text
+                    String secretKey = JOptionPane.showInputDialog("Enter the secret key"); // getting the secret key
+                    if(text.length()>0 && secretKey.length()>0) // checking if the text and secret key is not empty
+                    {
+                        //  password generator class reference
+                        CryptoUtil pass1 = new CryptoUtil(); // creating a object of the CryptoUtil class
+                        String passwd = pass1.decrypt(secretKey, text); // decrypting the text
+                        genePassArea = new JTextArea(5,4); // text area for the decrypted text
+                        textArea(passwd,genePassArea); // setting the text area
+                        JOptionPane.showMessageDialog(conn1,new JScrollPane(genePassArea),"Decrypted text",JOptionPane.INFORMATION_MESSAGE); // showing the decrypted text
+
+                    }
+                    else JOptionPane.showMessageDialog (conn1,"Password length must be greater than 8!","Invalid Input Error",JOptionPane.WARNING_MESSAGE);
+
                 }
-            } else {
-                JOptionPane.showMessageDialog(null, "Invalid selection.");
+                catch(Exception ex){JOptionPane.showMessageDialog(conn1,"Write something","EXIT!",JOptionPane.ERROR_MESSAGE);}
             }
         }
-    }
+        );
 
-    public static void viewBoughtItems() {
-        String selectedHero = jList.getSelectedValue();
-        if (selectedHero != null) {
-            ArrayList<String> inventory = heroInventory.getOrDefault(selectedHero, new ArrayList<>());
-    
-            if (inventory.isEmpty()) {
-                JOptionPane.showMessageDialog(null, selectedHero + " has no items.");
-            } else {
-                StringBuilder itemList = new StringBuilder(selectedHero + "'s Items:\n");
-                for (String item : inventory) {
-                    int itemDamage = dotaItems.getOrDefault(item, 0);   
-                    String itemEffect = dotaItemEffects.getOrDefault(item, "No effect.");
-    
-                    itemList.append("- ").append(item)
-                            .append(" (").append(itemDamage).append(" damage)\n")
-                            .append("  Effect: ").append(itemEffect).append("\n\n");
-                }
-                JOptionPane.showMessageDialog(null, itemList.toString());
-            }
-        } else {
-            JOptionPane.showMessageDialog(null, "Please select a hero to view items.");
-        }
-    }
-    
-
-
-    public static void deleteBuyItem() {
-        String selectedHero = jList.getSelectedValue();
-        if (selectedHero != null) {
-            ArrayList<String> inventory = heroInventory.getOrDefault(selectedHero, new ArrayList<>());
-    
-            if (inventory.isEmpty()) {
-                JOptionPane.showMessageDialog(null, selectedHero + " has no items to delete.");
-                return;
-            }
-    
-            // Show a list of items to delete
-            Object[] itemArray = inventory.toArray();
-            String selectedItem = (String) JOptionPane.showInputDialog(
-                    null,
-                    "Select an item to delete:",
-                    "Delete Buy Item",
-                    JOptionPane.QUESTION_MESSAGE,
-                    null,
-                    itemArray,
-                    itemArray[0]
-            );
-    
-            if (selectedItem != null) {
-                inventory.remove(selectedItem); // ✅ Correctly remove the item
-    
-                // Deduct damage from the hero
-                int itemDamage = dotaItems.getOrDefault(selectedItem, 0);  // ✅ Correct reference
-                int currentDamage = heroDamage.getOrDefault(selectedHero, 10);
-                heroDamage.put(selectedHero, Math.max(10, currentDamage - itemDamage));
-    
-                // Get the item effect
-                String itemEffect = dotaItemEffects.getOrDefault(selectedItem, "No effect.");
-    
-                JOptionPane.showMessageDialog(null,
-                        selectedHero + " deleted: " + selectedItem + " (-" + itemDamage + " physical damage)\n" +
-                                "Effect Removed: " + itemEffect + "\n" +
-                                "Total Damage: " + heroDamage.get(selectedHero));
-            }
-        } else {
-            JOptionPane.showMessageDialog(null, "Please select a hero to delete a bought item.");
-        }
-    }
-    
-
-    
-
-    public static void deleteItem() {
-        String itemToDelete = jList.getSelectedValue();
-        if (itemToDelete != null) {
-            list.remove(itemToDelete);
-            listModel.removeElement(itemToDelete);
-            heroInventory.remove(itemToDelete);
-            heroDamage.remove(itemToDelete);
-            JOptionPane.showMessageDialog(null, "Successfully deleted: " + itemToDelete);
-        } else {
-            JOptionPane.showMessageDialog(null, "Please select an item to delete.");
-        }
-    }
-
-    public static void updateItem() {
-        String selectedItem = jList.getSelectedValue();
-        if (selectedItem != null) {
-            List<String> meleeHeroes = Arrays.asList(
-                    "Axe", "Juggernaut", "Pudge", "Anti-Mage", "Slark", "Sven",
-                    "Phantom Assassin", "Ursa", "Wraith King", "Troll Warlord"
-            );
-    
-            JComboBox<String> heroDropdown = new JComboBox<>(meleeHeroes.toArray(new String[0]));
-            heroDropdown.setSelectedItem(selectedItem); // Pre-select current hero
-            int result = JOptionPane.showConfirmDialog(null, heroDropdown,
-                    "Update hero name:", JOptionPane.OK_CANCEL_OPTION);
-    
-            if (result == JOptionPane.OK_OPTION) {
-                String updatedItem = (String) heroDropdown.getSelectedItem();
-                if (!list.contains(updatedItem)) {
-                    int selectedIndex = jList.getSelectedIndex();
-                    list.set(selectedIndex, updatedItem);
-                    listModel.set(selectedIndex, updatedItem);
-    
-                    // Transfer inventory and damage data to the updated hero name
-                    heroInventory.put(updatedItem, heroInventory.getOrDefault(selectedItem, new ArrayList<>()));
-                    heroDamage.put(updatedItem, heroDamage.getOrDefault(selectedItem, 10));
-    
-                    // Remove old hero data
-                    heroInventory.remove(selectedItem);
-                    heroDamage.remove(selectedItem);
-    
-                    JOptionPane.showMessageDialog(null, "Successfully updated to: " + updatedItem);
-                } else {
-                    JOptionPane.showMessageDialog(null, "This hero already exists in the list!");
-                }
-            }
-        } else {
-            JOptionPane.showMessageDialog(null, "Please select a hero to update.");
-        }
-    }
-    
-
-    public static void buyItem() {
-        String selectedHero = jList.getSelectedValue();
-        if (selectedHero != null) {
-            Object[] itemArray = dotaItems.keySet().toArray();
-            String selectedItem = (String) JOptionPane.showInputDialog(null,
-                    "Select an item to buy:", "Buy Items",
-                    JOptionPane.QUESTION_MESSAGE, null, itemArray, itemArray[0]);
-    
-            if (selectedItem != null) {
-                heroInventory.putIfAbsent(selectedHero, new ArrayList<>());
-    
-                // Check if the item is already bought (case-sensitive)
-                if (heroInventory.get(selectedHero).contains(selectedItem)) {
-                    JOptionPane.showMessageDialog(null, selectedHero + " already owns " + selectedItem + ".");
-                    return;
-                }
-    
-                heroInventory.get(selectedHero).add(selectedItem); // ✅ Store the item with original name
-    
-                // Apply physical damage to hero
-                int itemDamage = dotaItems.getOrDefault(selectedItem, 0);  // ✅ Correct item reference
-                int currentDamage = heroDamage.getOrDefault(selectedHero, 10);
-                heroDamage.put(selectedHero, currentDamage + itemDamage);
-    
-                // Get the item effect
-                String itemEffect = dotaItemEffects.getOrDefault(selectedItem, "No effect.");
-    
-                JOptionPane.showMessageDialog(null,
-                        selectedHero + " bought: " + selectedItem + " (+" + itemDamage + " physical damage)\n" +
-                                "Effect: " + itemEffect + "\n" +
-                                "Total Damage: " + heroDamage.get(selectedHero));
-            }
-        } else {
-            JOptionPane.showMessageDialog(null, "Please select a hero to buy items.");
-        }
-    }
-    
-
-    public static void versusMode() {
-        List<String> selectedHeroes = jList.getSelectedValuesList();
-        if (selectedHeroes.size() == 2) {
-            String hero1 = selectedHeroes.get(0);
-            String hero2 = selectedHeroes.get(1);
-
-            int damage1 = heroDamage.getOrDefault(hero1, 10);
-            int damage2 = heroDamage.getOrDefault(hero2, 10);
-
-            ArrayList<String> itemsHero1 = heroInventory.getOrDefault(hero1, new ArrayList<>());
-            ArrayList<String> itemsHero2 = heroInventory.getOrDefault(hero2, new ArrayList<>());
-
-            if (itemsHero1.isEmpty() && itemsHero2.isEmpty()) {
-                JOptionPane.showMessageDialog(null, "Both heroes have no items. It's a fair match!");
-            } else if (itemsHero1.isEmpty()) {
-                JOptionPane.showMessageDialog(null, hero1 + " has no items! Don't expect to win!");
-            } else if (itemsHero2.isEmpty()) {
-                JOptionPane.showMessageDialog(null, hero2 + " has no items! Don't expect to win!");
-            } else {
-                JOptionPane.showMessageDialog(null, "Both heroes are fully geared! May the best hero win!");
-            }
-
-            showCountdown(() -> {
-                SwingUtilities.invokeLater(() -> showBattleAnimation(hero1, hero2, damage1, damage2));
-            });
-        } else {
-            JOptionPane.showMessageDialog(null, "Please select exactly 2 heroes for Versus Mode.");
-        }
-    }
-
-    public static void showCountdown(Runnable onComplete) {
-        JFrame countdownFrame = new JFrame("Get Ready!");
-        countdownFrame.setSize(200, 150);
-        countdownFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        JLabel label = new JLabel("3", SwingConstants.CENTER);
-        label.setFont(new Font("Arial", Font.BOLD, 50));
-        countdownFrame.add(label);
-        countdownFrame.setLocationRelativeTo(null);
-        countdownFrame.setVisible(true);
-
-        Timer timer = new Timer(1000, new ActionListener() {
-            int count = 3;
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                count--;
-                if (count == 0) {
-                    ((Timer) e.getSource()).stop();
-                    countdownFrame.dispose();
-                    onComplete.run();
-                } else {
-                    label.setText(String.valueOf(count));
-                }
-            }
-        });
-        timer.start();
-    }
-
-    public static void showBattleAnimation(String hero1, String hero2, int damage1, int damage2) {
-        JFrame battleFrame = new JFrame("Hero Battle!");
-        battleFrame.setSize(600, 300);
-        battleFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        BattlePanel battlePanel = new BattlePanel(hero1, hero2, damage1, damage2);
-        battleFrame.add(battlePanel);
-        battleFrame.setVisible(true);
-    }
-
-    public static String capitalizeFirstLetter(String input) {
-        if (input == null || input.isEmpty()) {
-            return input;
-        }
-        return input.substring(0, 1).toUpperCase() + input.substring(1).toLowerCase();
-    }
-
-    static class BattlePanel extends JPanel {
-        private String hero1, hero2;
-        private int damage1, damage2;
-        private int hero1X = 50;
-        private int hero2X = 500;
-        private int hero1HP = 100;
-        private int hero2HP = 100;
-        private boolean isHero1Attacking = false;
-        private boolean isHero2Attacking = false;
-    
-        // Fading Damage Text
-        private String damageText1 = "";
-        private String damageText2 = "";
-        private float damageAlpha1 = 1.0f;
-        private float damageAlpha2 = 1.0f;
-    
-        private Random random = new Random();
-    
-        public BattlePanel(String hero1, String hero2, int damage1, int damage2) {
-            this.hero1 = hero1;
-            this.hero2 = hero2;
-            this.damage1 = damage1;
-            this.damage2 = damage2;
-    
-            // Move heroes toward each other
-            Timer timer = new Timer(200, e -> {
-                hero1X += 10;
-                hero2X -= 10;
-    
-                // Stop movement when they meet
-                if (hero1X >= 250 || hero2X <= 250) {
-                    ((Timer) e.getSource()).stop();
-                    startBattle();
-                }
-                repaint();
-            });
-            timer.start();
-        }
-
-        
-
-        @Override
-protected void paintComponent(Graphics g) {
-    super.paintComponent(g);
-
-    // Draw health bars
-    g.setColor(Color.RED);
-    g.fillRect(50, 20, hero1HP * 2, 20); // Hero 1 HP bar
-    g.setColor(Color.GREEN);
-    g.fillRect(500 - (hero2HP * 2), 20, hero2HP * 2, 20); // Hero 2 HP bar
-
-    // Draw Hero HP Text
-    g.setColor(Color.BLACK);
-    g.drawString(hero1 + " HP: " + hero1HP + "%", 50, 50);
-    g.drawString(hero2 + " HP: " + hero2HP + "%", 400, 50);
-
-    // Draw "VS" in the center of the HP bar
-    g.setFont(new Font("Arial", Font.BOLD, 18)); // Set font size and style
-    String vsText = "VS";
-    int vsWidth = g.getFontMetrics().stringWidth(vsText);
-    g.drawString(vsText, 275 - (vsWidth / 2), 35); // Position "VS" in center
-
-    // Draw Damage Text with Fading Effect
-    Graphics2D g2d = (Graphics2D) g;
-    g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, damageAlpha1));
-    g.setColor(Color.RED);
-    if (!damageText1.isEmpty()) {
-        g.drawString(damageText1, hero1X - 15, 120);
-    }
-
-    g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, damageAlpha2));
-    if (!damageText2.isEmpty()) {
-        g.drawString(damageText2, hero2X - 15, 120);
-    }
-
-    // Draw heroes or dust if defeated
-    if (hero1HP > 0) {
-        drawHero(g, hero1X + (isHero1Attacking ? 10 : 0), 150, hero1, Color.RED);
-    } else {
-        drawDust(g, hero1X);
-    }
-
-    if (hero2HP > 0) {
-        drawHero(g, hero2X - (isHero2Attacking ? 10 : 0), 150, hero2, Color.GREEN);
-    } else {
-        drawDust(g, hero2X);
-    }
-}
-
-private void drawHero(Graphics g, int x, int y, String hero, Color color) {
-    g.setColor(color);
-    g.fillOval(x - 10, y - 50, 20, 20); // Hero head
-    g.drawLine(x, y - 30, x, y); // Body
-    g.drawLine(x, y, x - 20, y + 30); // Left leg
-    g.drawLine(x, y, x + 20, y + 30); // Right leg
-    g.drawLine(x, y - 20, x - 20, y - 10); // Left arm
-    g.drawLine(x, y - 20, x + 20, y - 10); // Right arm
-}
-
-        private void drawDust(Graphics g, int x) {
-            g.setColor(Color.LIGHT_GRAY);
-            g.fillOval(x - 20, 150 - 20, 40, 40);
-        }
-
-    private void startBattle() {
-    Timer attackTimer = new Timer(500, new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            if (random.nextBoolean()) {
-                startAttackAnimation(true);
-                damage1 = random.nextInt(10);
-                if (damage1 == 0) {
-                    showDamageText(false, "-0"); // Miss
-                } else {
-                    hero2HP -= damage1;
-                    showDamageText(false, "-" + damage1);
-                }
-                if (hero2HP <= 0) {
-                    hero2HP = 0;
-                    ((Timer) e.getSource()).stop();
-                    showResult(hero1, hero1HP);
-                }
-            } else {
-                startAttackAnimation(false);
-                damage2 = random.nextInt(10);
-                if (damage2 == 0) {
-                    showDamageText(true, "-0"); // Miss
-                } else {
-                    hero1HP -= damage2;
-                    showDamageText(true, "-" + damage2);
-                }
-                if (hero1HP <= 0) {
-                    hero1HP = 0;
-                    ((Timer) e.getSource()).stop();
-                    showResult(hero2, hero2HP);
-                }
-            }
-            repaint();
-        }
-    });
-    attackTimer.start();
-}
-
-        private void startAttackAnimation(boolean isHero1) {
-            Timer punchTimer = new Timer(100, new ActionListener() {
-                int punchCount = 0;
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    if (punchCount < 4) {
-                        if (isHero1) {
-                            isHero1Attacking = !isHero1Attacking;
-                        } else {
-                            isHero2Attacking = !isHero2Attacking;
+        //storing password using hashtable
+        PassStoreBtn = new JButton("STORE PASSWORD");
+        PassStoreBtn.setBounds(90, 230, 220, 40);
+        conn1.add(PassStoreBtn);
+        GUIButtonsSetting(PassStoreBtn);
+        //Store password action
+        PassStoreBtn.addActionListener(e -> {
+            if(PassStoreBtn ==e.getSource())
+            {
+                try{
+                    StoringGUI();
+                    // action on the Store btn
+                    AccAddBtn.addActionListener(e4 -> {
+                        if (AccAddBtn == e4.getSource()) {
+                            String account_name = tAcc.getText(); // getting the account name
+                            String acc_pass = tPass.getText(); // getting the password
+                            if (account_name.isEmpty() && acc_pass.isEmpty()) {
+                                JOptionPane.showMessageDialog(conn2,"unable to store your password!","ERROR",JOptionPane.ERROR_MESSAGE);
+                            }
+                            else{
+                                //calling put method of the hashtablePassword class
+                                data.add_Acc(account_name,acc_pass); // adding the account name and password to the hashtable
+                                JOptionPane.showMessageDialog(conn2, "Account added Successfully !");
+                                tAcc.setText(null);
+                                tPass.setText(null);
+                            }
                         }
-                        repaint();
-                        punchCount++;
-                    } else {
-                        ((Timer) e.getSource()).stop();
-                        isHero1Attacking = false;
-                        isHero2Attacking = false;
-                        repaint();
+                      }
+                    );
+                }
+           catch(Exception ex) {JOptionPane.showMessageDialog(conn2,"Write something","EXIT",JOptionPane.ERROR_MESSAGE);}
+            }
+        }
+        );
+
+        //searching password
+        PassSearchBtn = new JButton("SEARCH PASSWORD");
+        GUIButtonsSetting(PassSearchBtn);
+        PassSearchBtn.setBounds(90, 300, 220, 40);
+        conn1.add(PassSearchBtn);
+        PassSearchBtn.addActionListener(e ->{
+            if (PassSearchBtn ==e.getSource()){
+                try{
+                    String acc_name = JOptionPane.showInputDialog("Enter your Account Name"); // getting the account name
+                    if (!acc_name.isBlank()) { // checking if the account name is not empty
+                        Object pass = data.get_Acc(acc_name.toLowerCase()); // getting the password of the account name
+                        if(pass!=null) { // checking if the password is not null
+                            searchPassArea = new JTextArea(4,5); // text area for the password
+                            textArea(String.valueOf(pass), searchPassArea); // setting the text area
+                            JOptionPane.showMessageDialog(conn1, new JScrollPane(searchPassArea), "Copy your password", JOptionPane.INFORMATION_MESSAGE);
+                        }
+                        else JOptionPane.showMessageDialog(conn1, "Account not Found!");
                     }
                 }
-            });
-            punchTimer.start();
-        }
-
-        private void showDamageText(boolean isHero1, String text) {
-            if (isHero1) {
-                damageText1 = text;
-                damageAlpha1 = 1.0f;
-                startFadeOut(true);
-            } else {
-                damageText2 = text;
-                damageAlpha2 = 1.0f;
-                startFadeOut(false);
-            }
-        }
-
-        private void startFadeOut(boolean isHero1) {
-            Timer fadeTimer = new Timer(100, new ActionListener() {
-                float alpha = 1.0f;
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    alpha -= 0.1f;
-                    if (alpha <= 0) {
-                        ((Timer) e.getSource()).stop();
-                        if (isHero1) {
-                            damageText1 = "";
-                        } else {
-                            damageText2 = "";
-                        }
-                    } else {
-                        if (isHero1) {
-                            damageAlpha1 = alpha;
-                        } else {
-                            damageAlpha2 = alpha;
-                        }
+                catch (Exception ex){
+                    JOptionPane.showMessageDialog(conn1,"Write something","EXIT",JOptionPane.ERROR_MESSAGE);
                     }
-                    repaint();
                 }
-            });
-            fadeTimer.start();
+            }
+        );
+
+        // deleting password
+        PassDeleteBtn = new JButton("DELETE PASSWORD");
+        GUIButtonsSetting(PassDeleteBtn);
+        PassDeleteBtn.setBounds(90, 370, 220, 40);
+        conn1.add(PassDeleteBtn);
+        PassDeleteBtn.addActionListener(e -> {
+            if (PassDeleteBtn == e.getSource()) {
+                try {
+                    String acc_name = JOptionPane.showInputDialog("Enter the Account Name"); // getting the account name
+                    if (!acc_name.isBlank()) {
+                        data.remove_Acc(acc_name.toLowerCase()); // removing the account name and password from the hashtable
+                        JOptionPane.showMessageDialog(conn1, "Delete successfully!"); // showing the message
+                    }
+                    else JOptionPane.showMessageDialog(conn1, "Account not found!", "INFO", JOptionPane.INFORMATION_MESSAGE);
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(conn1, "Write something", "EXIT", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+
         }
+        );
 
-
-        private void showResult(String winner, int hp) {
-            String result = winner + " wins with " + hp + "% HP remaining!";
-            JOptionPane.showMessageDialog(null, result);
-        
-            int choice = JOptionPane.showConfirmDialog(null,
-                    "Do you want to continue fighting with " + winner + "?",
-                    "Continue Battle?", JOptionPane.YES_NO_OPTION);
-        
-            if (choice == JOptionPane.YES_OPTION) {
-                continueFight(winner, hp);
-            } else {
-                JOptionPane.showMessageDialog(null, "Battle ended. Thanks for playing!");
+        addNoteBtn = new JButton("ADD NOTE");
+        GUIButtonsSetting(addNoteBtn);
+        addNoteBtn.setBounds(90, 440, 220, 40);
+        conn1.add(addNoteBtn);
+        addNoteBtn.addActionListener(e -> {
+            if (addNoteBtn == e.getSource()) {
+                try {
+                    NoteGUI();
+                    // action on the add note btn
+                    addNote.addActionListener(e4 -> {
+                        if (addNote == e4.getSource()) {
+                            String note = tNote.getText(); // getting the note
+                            if (note.isEmpty()) {
+                                JOptionPane.showMessageDialog(conn3, "unable to store your note!", "ERROR", JOptionPane.ERROR_MESSAGE);
+                            } else {
+                                //calling put method of the hashtablePassword class
+                                notes.add(note); // adding the note to the arraylist
+                                JOptionPane.showMessageDialog(conn3, "Note added Successfully !");
+                                conn3.setVisible(false);
+                                tNote.setText(null);
+                            }
+                        }
+                    });
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(conn3, "Write something", "EXIT", JOptionPane.ERROR_MESSAGE);
+                }
             }
         }
-
-        private void continueFight(String winner, int hp) {
-            // Get list of all available heroes except the winner
-            List<String> availableHeroes = new ArrayList<>(list);
-            availableHeroes.remove(winner);
+        );
         
-            if (availableHeroes.isEmpty()) {
-                JOptionPane.showMessageDialog(null, "No other heroes left to fight! Battle ends.");
-                return;
-            }
-        
-            // Select a new opponent for the winner
-            String newOpponent = (String) JOptionPane.showInputDialog(null,
-                    "Select a new opponent for " + winner + ":",
-                    "Continue Fighting",
-                    JOptionPane.QUESTION_MESSAGE,
-                    null,
-                    availableHeroes.toArray(),
-                    availableHeroes.get(0));
-        
-            // Check if a new opponent was selected
-            if (newOpponent != null) {
-                int winnerDamage = heroDamage.getOrDefault(winner, 10);
-                int opponentDamage = heroDamage.getOrDefault(newOpponent, 10);
-        
-                // Remove the selected opponent from the list of available heroes
-                list.remove(newOpponent);
-        
-                // Start a new battle and pass remaining HP of the winner
-                SwingUtilities.invokeLater(() -> 
-                    showBattleAnimationWithHP(winner, newOpponent, winnerDamage, opponentDamage, hp)
-                );
-            } else {
-                JOptionPane.showMessageDialog(null, "No opponent selected. Battle ends.");
+        //get all notes
+        JButton getNoteBtn = new JButton("GET NOTE");
+        GUIButtonsSetting(getNoteBtn);
+        getNoteBtn.setBounds(90, 510, 220, 40);
+        conn1.add(getNoteBtn);
+        getNoteBtn.addActionListener(e -> {
+            if (getNoteBtn == e.getSource()) {
+                try {
+                    String allNotes = notes.get(notes.size() - 1); // getting the last note added
+                    if (allNotes.isEmpty()) { // checking if the note is empty or not
+                        JOptionPane.showMessageDialog(conn1, "No note found!", "INFO", JOptionPane.INFORMATION_MESSAGE); // showing the message
+                    } else {
+                        searchPassArea = new JTextArea(4, 5); // text area for the note
+                        textArea(allNotes, searchPassArea); // setting the text area
+                        JOptionPane.showMessageDialog(conn1, new JScrollPane(searchPassArea), "Get your notes", JOptionPane.INFORMATION_MESSAGE); // showing the message
+                    }
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(conn1, "Add a note before trying to retrive", "EXIT", JOptionPane.ERROR_MESSAGE);
+                }
             }
         }
+        );
 
-        public static void showBattleAnimationWithHP(String hero1, String hero2, int damage1, int damage2, int hero1HP) {
-            JFrame battleFrame = new JFrame("Hero Battle!");
-            battleFrame.setSize(600, 300);
-            battleFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-            BattlePanel battlePanel = new BattlePanel(hero1, hero2, damage1, damage2, hero1HP);
-            battleFrame.add(battlePanel);
-            battleFrame.setVisible(true);
-        }
-
-        public BattlePanel(String hero1, String hero2, int damage1, int damage2, int hero1HP) {
-    this.hero1 = hero1;
-    this.hero2 = hero2;
-    this.damage1 = damage1;
-    this.damage2 = damage2;
-    this.hero1HP = hero1HP; // Carry over winning HP
-    this.hero2HP = 100; // New opponent starts with full HP
-
-    Timer timer = new Timer(200, e -> {
-        hero1X += 10;
-        hero2X -= 10;
-
-        if (hero1X >= 250 || hero2X <= 250) {
-            ((Timer) e.getSource()).stop();
-            startBattle();
-        }
-        repaint();
-    });
-    timer.start();
-}
     }
+
+    // method for setting the buttons and GUI for adding notes
+    private void NoteGUI() {
+
+        conn3 = new JFrame("Add Note");
+        conn3.setSize(500, 500);
+        conn3.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        conn3.setLocationRelativeTo(null);
+        conn3.setLayout(null);
+        conn3.setVisible(true);
+        conn3.setResizable(false);
+
+        //add note label
+         addNoteLabel = new JLabel("Add Note");
+        addNoteLabel.setBounds(200, 20, 100, 30);
+        conn3.add(addNoteLabel);
+
+        //add note text area
+         tNote = new JTextArea(10, 10);
+        tNote.setBounds(100, 60, 300, 300);
+        conn3.add(tNote);
+
+        //add note button
+         addNote = new JButton("ADD NOTE");
+        GUIButtonsSetting(addNote);
+        addNote.setBounds(140, 380, 220, 30);
+        conn3.add(addNote);
+    }
+
+    // main method to run the application   
+    public static void main(String[] args) {
+        //loading screen class
+        new SplashScreen();
+        try {
+            new PasswordManager();
+        }catch (Exception ex) { ex.printStackTrace(); }
+ }
 }
