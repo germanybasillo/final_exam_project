@@ -8,7 +8,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import array_list.createUi;
 
 
 public class CRUDApp {
@@ -29,21 +28,57 @@ public class CRUDApp {
             if (list.isEmpty()) {
                 JOptionPane.showMessageDialog(null, "No hero added yet!");
             }
-    
-            // Correctly call createUi.createUI() and pass the required parameters
-            createUi.createUI(
-                listModel, jList,
-                e -> addItem(),
-                e -> deleteItem(),
-                e -> updateItem(),
-                e -> versusMode(),
-                e -> buyItem(),
-                e -> deleteBuyItem(),
-                e -> viewBoughtItems()
-            );
-        }); 
+            createUI();
+        });
     }
+    
+    public static void createUI() {
+        JFrame frame = new JFrame("CRUD Application - Dota 2 Heroes");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize(800, 350);
+
+        frame.setLayout(new BorderLayout());
+        listModel.clear();
+        for (String item : list) {
+            listModel.addElement(item);
+        }
+
+        JScrollPane scrollPane = new JScrollPane(jList);
+        frame.add(scrollPane, BorderLayout.CENTER);
+
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.setLayout(new FlowLayout());
         
+        
+        JButton addButton = new JButton("Add Hero");
+        JButton deleteButton = new JButton("Delete Hero");
+        JButton updateButton = new JButton("Update Hero");
+        JButton versusButton = new JButton("Versus Mode");
+        JButton buyItemButton = new JButton("Buy Items");
+        JButton deleteBuyItemButton = new JButton("Delete Buy Item");
+        JButton viewItemsButton = new JButton("View Items");
+
+        buttonPanel.add(addButton);
+        buttonPanel.add(deleteButton);
+        buttonPanel.add(updateButton);
+        buttonPanel.add(versusButton);
+        buttonPanel.add(buyItemButton);
+        buttonPanel.add(deleteBuyItemButton);
+        buttonPanel.add(viewItemsButton);
+        
+
+        frame.add(buttonPanel, BorderLayout.SOUTH);
+
+        addButton.addActionListener(e -> addItem());
+        deleteButton.addActionListener(e -> deleteItem());
+        updateButton.addActionListener(e -> updateItem());
+        versusButton.addActionListener(e -> versusMode());
+        buyItemButton.addActionListener(e -> buyItem());
+        deleteBuyItemButton.addActionListener(e -> deleteBuyItem());
+        viewItemsButton.addActionListener(e -> viewBoughtItems());
+        frame.setVisible(true);
+    }
+
     public static void initializeItems() {
         dotaItems.put("Desolator", 40);     
         dotaItemEffects.put("Desolator", "Reduces enemy armor on hit by 6 for 7 seconds.");
@@ -544,7 +579,82 @@ private void drawHero(Graphics g, int x, int y, String hero, Color color) {
         private void showResult(String winner, int hp) {
             String result = winner + " wins with " + hp + "% HP remaining!";
             JOptionPane.showMessageDialog(null, result);
+        
+            int choice = JOptionPane.showConfirmDialog(null,
+                    "Do you want to continue fighting with " + winner + "?",
+                    "Continue Battle?", JOptionPane.YES_NO_OPTION);
+        
+            if (choice == JOptionPane.YES_OPTION) {
+                continueFight(winner, hp);
+            } else {
                 JOptionPane.showMessageDialog(null, "Battle ended. Thanks for playing!");
             }
         }
+
+        private void continueFight(String winner, int hp) {
+            // Get list of all available heroes except the winner
+            List<String> availableHeroes = new ArrayList<>(list);
+            availableHeroes.remove(winner);
+        
+            if (availableHeroes.isEmpty()) {
+                JOptionPane.showMessageDialog(null, "No other heroes left to fight! Battle ends.");
+                return;
+            }
+        
+            // Select a new opponent for the winner
+            String newOpponent = (String) JOptionPane.showInputDialog(null,
+                    "Select a new opponent for " + winner + ":",
+                    "Continue Fighting",
+                    JOptionPane.QUESTION_MESSAGE,
+                    null,
+                    availableHeroes.toArray(),
+                    availableHeroes.get(0));
+        
+            // Check if a new opponent was selected
+            if (newOpponent != null) {
+                int winnerDamage = heroDamage.getOrDefault(winner, 10);
+                int opponentDamage = heroDamage.getOrDefault(newOpponent, 10);
+        
+                // Remove the selected opponent from the list of available heroes
+                list.remove(newOpponent);
+        
+                // Start a new battle and pass remaining HP of the winner
+                SwingUtilities.invokeLater(() -> 
+                    showBattleAnimationWithHP(winner, newOpponent, winnerDamage, opponentDamage, hp)
+                );
+            } else {
+                JOptionPane.showMessageDialog(null, "No opponent selected. Battle ends.");
+            }
+        }
+
+        public static void showBattleAnimationWithHP(String hero1, String hero2, int damage1, int damage2, int hero1HP) {
+            JFrame battleFrame = new JFrame("Hero Battle!");
+            battleFrame.setSize(600, 300);
+            battleFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+            BattlePanel battlePanel = new BattlePanel(hero1, hero2, damage1, damage2, hero1HP);
+            battleFrame.add(battlePanel);
+            battleFrame.setVisible(true);
+        }
+
+        public BattlePanel(String hero1, String hero2, int damage1, int damage2, int hero1HP) {
+    this.hero1 = hero1;
+    this.hero2 = hero2;
+    this.damage1 = damage1;
+    this.damage2 = damage2;
+    this.hero1HP = hero1HP; // Carry over winning HP
+    this.hero2HP = 100; // New opponent starts with full HP
+
+    Timer timer = new Timer(200, e -> {
+        hero1X += 10;
+        hero2X -= 10;
+
+        if (hero1X >= 250 || hero2X <= 250) {
+            ((Timer) e.getSource()).stop();
+            startBattle();
+        }
+        repaint();
+    });
+    timer.start();
+}
     }
+}
