@@ -19,6 +19,7 @@ import javax.crypto.spec.PBEParameterSpec;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
+import java.awt.datatransfer.DataFlavor;
 
 
 // This class is used to create a loading screen
@@ -387,18 +388,36 @@ class PasswordManager implements ActionListener {
         tAcc.setForeground(Color.DARK_GRAY);
         conn2.add(tAcc);
 
-        //Account password textField and label
-        lPass = new JLabel("ACCOUNT PASSWORD");
-        lPass.setBounds(90, 160, 380, 20);
-        lPass.setFont(fn);
-        conn2.add(lPass);
+      // Account password label
+lPass = new JLabel("ACCOUNT PASSWORD");
+lPass.setBounds(90, 160, 380, 20);
+lPass.setFont(fn);
+conn2.add(lPass);
 
-        tPass = new JTextField();
-        tPass.setBounds(90,200,200,50);
-        tPass.setFont(fn);
-        tPass.setBorder(BorderFactory.createLineBorder(Color.BLACK, 3));
-        tPass.setForeground(Color.DARK_GRAY);
-        conn2.add(tPass);
+// Account password text field
+tPass = new JTextField();
+tPass.setBounds(90, 200, 200, 50);
+tPass.setFont(fn);
+tPass.setBorder(BorderFactory.createLineBorder(Color.BLACK, 3));
+tPass.setForeground(Color.DARK_GRAY);
+conn2.add(tPass);
+
+// PASTE button to paste clipboard content into tPass
+JButton pasteBtn = new JButton("PASTE");
+pasteBtn.setBounds(300, 200, 100, 50); // Positioning paste button next to tPass
+GUIButtonsSetting(pasteBtn);
+conn2.add(pasteBtn);
+
+// Paste button action
+pasteBtn.addActionListener(pasteEvent -> {
+    try {
+        Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+        String clipboardData = (String) clipboard.getData(DataFlavor.stringFlavor);
+        tPass.setText(clipboardData); // Set pasted content to tPass
+    } catch (Exception ex) {
+        JOptionPane.showMessageDialog(conn2, "Failed to paste data!", "Error", JOptionPane.ERROR_MESSAGE);
+    }
+});
 
         AccAddBtn = new JButton("STORE");
         AccAddBtn.setBounds(120, 290, 150, 50);
@@ -488,58 +507,139 @@ class PasswordManager implements ActionListener {
         EncryptBtn.setBounds(55, 90, 290, 40);
         conn1.add(EncryptBtn);
         GUIButtonsSetting(EncryptBtn);
+        
         EncryptBtn.addActionListener(e -> {
-            if(EncryptBtn ==e.getSource())
-            {
-                try{
+            if (EncryptBtn == e.getSource()) {
+                try {
                     String text = JOptionPane.showInputDialog("Enter the password to encrypt");
                     String secretKey = JOptionPane.showInputDialog("Enter the secret key");
-                    if(text.length()>0 && secretKey.length()>0)
-                    {
-                        //  password generator class reference
+        
+                    if (text.length() > 0 && secretKey.length() > 0) {
+                        // Password encryption class reference
                         CryptoUtil pass1 = new CryptoUtil();
-                        String passwd = pass1.encrypt(secretKey, text); // encrypting the text
-                        genePassArea = new JTextArea(5,4); // text area for the encrypted text
-                        textArea(passwd,genePassArea); // setting the text area
-                        JOptionPane.showMessageDialog(conn1,new JScrollPane(genePassArea),"Copy your password",JOptionPane.INFORMATION_MESSAGE); // showing the encrypted text
-
+                        String passwd = pass1.encrypt(secretKey, text); // Encrypting the text
+                        
+                        genePassArea = new JTextArea(5, 20); // Text area for the encrypted text
+                        genePassArea.setText(passwd);
+                        genePassArea.setEditable(false); // Make the text area read-only
+        
+                        // Create a Copy button
+                        JButton CopyBtn = new JButton("COPY");
+                        CopyBtn.addActionListener(copyEvent -> {
+                            StringSelection stringSelection = new StringSelection(passwd);
+                            Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+                            clipboard.setContents(stringSelection, null);
+                            JOptionPane.showMessageDialog(null, "Password copied to clipboard!", "Success", JOptionPane.INFORMATION_MESSAGE);
+                        });
+        
+                        // Add text area and copy button to a panel
+                        JPanel panel = new JPanel();
+                        panel.setLayout(new BorderLayout());
+                        panel.add(new JScrollPane(genePassArea), BorderLayout.CENTER);
+                        panel.add(CopyBtn, BorderLayout.SOUTH);
+        
+                        // Show the panel with text area and button inside the JOptionPane
+                        JOptionPane.showMessageDialog(conn1, panel, "Copy your password", JOptionPane.INFORMATION_MESSAGE);
+                    } 
+                    else {
+                        JOptionPane.showMessageDialog(conn1, "Write something", "Invalid Input Error", JOptionPane.WARNING_MESSAGE);
                     }
-                    else JOptionPane.showMessageDialog (conn1,"Write something","Invalid Input Error",JOptionPane.WARNING_MESSAGE);
-
+                } 
+                catch (Exception ex) {
+                    JOptionPane.showMessageDialog(conn1, "Error occurred while encrypting!", "EXIT!", JOptionPane.ERROR_MESSAGE);
                 }
-                catch(Exception ex){JOptionPane.showMessageDialog(conn1,"Write something","EXIT!",JOptionPane.ERROR_MESSAGE);}
             }
-        }
-        );
+        });
+        
 
-        // add a decryption button and action
-        JButton DecryptBtn = new JButton("SHOW/DECRYPT Text PASSWORD"); 
-        DecryptBtn.setBounds(55, 160, 280, 40);
-        conn1.add(DecryptBtn);
-        GUIButtonsSetting(DecryptBtn);
-        DecryptBtn.addActionListener(e -> {
-            if(DecryptBtn ==e.getSource())
-            {
-                try{
-                    String text = JOptionPane.showInputDialog("Enter the password key generate in the encrypt"); // getting the encrypted text
-                    String secretKey = JOptionPane.showInputDialog("Enter the secret key you create in the encrypt"); // getting the secret key
-                    if(text.length()>0 && secretKey.length()>0) // checking if the text and secret key is not empty
-                    {
-                        //  password generator class reference
-                        CryptoUtil pass1 = new CryptoUtil(); // creating a object of the CryptoUtil class
-                        String passwd = pass1.decrypt(secretKey, text); // decrypting the text
-                        genePassArea = new JTextArea(5,4); // text area for the decrypted text
-                        textArea(passwd,genePassArea); // setting the text area
-                        JOptionPane.showMessageDialog(conn1,new JScrollPane(genePassArea),"Decrypted text",JOptionPane.INFORMATION_MESSAGE); // showing the decrypted text
+    // Add a decryption button and action
+JButton DecryptBtn = new JButton("SHOW/DECRYPT Text PASSWORD"); 
+DecryptBtn.setBounds(55, 160, 280, 40);
+conn1.add(DecryptBtn);
+GUIButtonsSetting(DecryptBtn);
 
+DecryptBtn.addActionListener(e -> {
+    if (DecryptBtn == e.getSource()) {
+        try {
+            // Create a panel for the encrypted text input with a paste button
+            JPanel panel1 = new JPanel(new BorderLayout());
+            JTextField encryptedTextField = new JTextField(20);
+            JButton pasteBtn1 = new JButton("PASTE");
+            
+            // Paste button to paste clipboard content into the encryptedTextField
+            pasteBtn1.addActionListener(pasteEvent -> {
+                try {
+                    Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+                    String clipboardData = (String) clipboard.getData(DataFlavor.stringFlavor);
+                    encryptedTextField.setText(clipboardData);
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(conn1, "Failed to paste data!", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            });
+
+            // Add encryptedTextField and paste button to the panel
+            panel1.add(encryptedTextField, BorderLayout.CENTER);
+            panel1.add(pasteBtn1, BorderLayout.EAST);
+
+            // Show dialog to get the encrypted text
+            int result1 = JOptionPane.showConfirmDialog(conn1, panel1, "Enter the password key generated in encrypt", JOptionPane.OK_CANCEL_OPTION);
+
+            if (result1 == JOptionPane.OK_OPTION) {
+                String text = encryptedTextField.getText();
+
+                // Create a simple text field for secret key input (without paste button)
+                JTextField secretKeyField = new JTextField(20);
+
+                // Show dialog to get the secret key without paste button
+                int result2 = JOptionPane.showConfirmDialog(conn1, secretKeyField, "Enter the secret key you created in encrypt", JOptionPane.OK_CANCEL_OPTION);
+
+                if (result2 == JOptionPane.OK_OPTION) {
+                    String secretKey = secretKeyField.getText();
+
+                    if (text.length() > 0 && secretKey.length() > 0) {
+                        // Password generator class reference
+                        CryptoUtil pass1 = new CryptoUtil(); // Create an object of the CryptoUtil class
+                        String passwd = pass1.decrypt(secretKey, text); // Decrypting the text
+                        
+                        genePassArea = new JTextArea(5, 20); // Text area for the decrypted text
+                        genePassArea.setText(passwd);
+                        genePassArea.setEditable(false); // Make the text area read-only
+                        
+                        // Create a panel to show decrypted text and add a copy button
+                        JPanel panel3 = new JPanel(new BorderLayout());
+                        panel3.add(new JScrollPane(genePassArea), BorderLayout.CENTER);
+
+                        // Create COPY button to copy decrypted text to clipboard
+                        JButton copyBtn = new JButton("COPY");
+                        copyBtn.addActionListener(copyEvent -> {
+                            try {
+                                StringSelection stringSelection = new StringSelection(genePassArea.getText());
+                                Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+                                clipboard.setContents(stringSelection, null);
+                                JOptionPane.showMessageDialog(conn1, "Decrypted text copied to clipboard!", "Success", JOptionPane.INFORMATION_MESSAGE);
+                            } catch (Exception ex) {
+                                JOptionPane.showMessageDialog(conn1, "Failed to copy data!", "Error", JOptionPane.ERROR_MESSAGE);
+                            }
+                        });
+
+                        // Add copy button to panel3
+                        panel3.add(copyBtn, BorderLayout.SOUTH);
+
+                        // Show decrypted text inside JOptionPane
+                        JOptionPane.showMessageDialog(conn1, panel3, "Decrypted text", JOptionPane.INFORMATION_MESSAGE);
+                    } else {
+                        JOptionPane.showMessageDialog(conn1, "Password length must be greater than 8!", "Invalid Input Error", JOptionPane.WARNING_MESSAGE);
                     }
-                    else JOptionPane.showMessageDialog (conn1,"Password length must be greater than 8!","Invalid Input Error",JOptionPane.WARNING_MESSAGE);
-
                 }
-                catch(Exception ex){JOptionPane.showMessageDialog(conn1,"Wrong something","EXIT!",JOptionPane.ERROR_MESSAGE);}
             }
+        } 
+        catch (Exception ex) {
+            JOptionPane.showMessageDialog(conn1, "Something went wrong!", "ERROR", JOptionPane.ERROR_MESSAGE);
         }
-        );
+    }
+});
+
+
 
         //storing password using hashtable
         PassStoreBtn = new JButton("STORE PASSWORD");
