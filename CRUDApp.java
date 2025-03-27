@@ -16,6 +16,9 @@ import java.util.Base64;
 import javax.crypto.*;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.PBEParameterSpec;
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
 
 
 // This class is used to create a loading screen
@@ -433,46 +436,63 @@ class PasswordManager implements ActionListener {
         conn1 = frame.getContentPane();
         ContainerGUI(conn1);
 
-        //Generator buttons settings
-        PassGeneBtn = new JButton("GENERATE PASSWORD");
-        PassGeneBtn.setBounds(90, 20, 220, 40);
-        conn1.add(PassGeneBtn);
-        GUIButtonsSetting(PassGeneBtn);
+        // //Generator buttons settings
+        // PassGeneBtn = new JButton("GENERATE PASSWORD");
+        // PassGeneBtn.setBounds(90, 20, 220, 40);
+        // conn1.add(PassGeneBtn);
+        // GUIButtonsSetting(PassGeneBtn);
 
-        //generating password
-        PassGeneBtn.addActionListener(e -> {
-        if(PassGeneBtn ==e.getSource())
-        {
-            try{
-                int len = Integer.parseInt(JOptionPane.showInputDialog("Enter the password length"));
-                if(len>4)
-                {
-                    //  password generator class reference
-                    PasswordGenerator pass = new PasswordGenerator();
-                    String passwd = pass.generatePassword(len);
-                    genePassArea = new JTextArea(5,4);
-                    textArea(passwd,genePassArea);
-                    JOptionPane.showMessageDialog(conn1,new JScrollPane(genePassArea),"Copy your password",JOptionPane.INFORMATION_MESSAGE);
-
-                }
-                else JOptionPane.showMessageDialog (conn1,"Password length must be greater than 8!","Invalid Input Error",JOptionPane.WARNING_MESSAGE);
-
-            }
-            catch(Exception ex){JOptionPane.showMessageDialog(conn1,"Write something","EXIT!",JOptionPane.ERROR_MESSAGE);}
-        }
-    }
-    );
+        // //generating password
+        // PassGeneBtn.addActionListener(e -> {
+        //     if (PassGeneBtn == e.getSource()) {
+        //         try {
+        //             int len = Integer.parseInt(JOptionPane.showInputDialog("Enter the password length"));
+        //             if (len > 4) {
+        //                 // Password generator class reference
+        //                 PasswordGenerator pass = new PasswordGenerator();
+        //                 String passwd = pass.generatePassword(len);
+                        
+        //                 genePassArea = new JTextArea(5, 4);
+        //                 textArea(passwd, genePassArea);
+                        
+        //                 // Create copy button
+        //                 JButton copyBtn = new JButton("COPY");
+        //                 copyBtn.addActionListener(copyEvent -> {
+        //                     StringSelection stringSelection = new StringSelection(passwd);
+        //                     Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+        //                     clipboard.setContents(stringSelection, null);
+        //                     JOptionPane.showMessageDialog(conn1, "Password copied to clipboard!", "Success", JOptionPane.INFORMATION_MESSAGE);
+        //                 });
+        
+        //                 // Add the copy button and text area in a JPanel
+        //                 JPanel panel = new JPanel();
+        //                 panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        //                 panel.add(new JScrollPane(genePassArea));
+        //                 panel.add(copyBtn);
+        
+        //                 // Show dialog with generated password and copy button
+        //                 JOptionPane.showMessageDialog(conn1, panel, "Copy your password", JOptionPane.INFORMATION_MESSAGE);
+        //             } 
+        //             else {
+        //                 JOptionPane.showMessageDialog(conn1, "Password length must be greater than 4!", "Invalid Input Error", JOptionPane.WARNING_MESSAGE);
+        //             }
+        //         } 
+        //         catch (Exception ex) {
+        //             JOptionPane.showMessageDialog(conn1, "Write something", "EXIT!", JOptionPane.ERROR_MESSAGE);
+        //         }
+        //     }
+        // });
  
         // add a encryption button and action
-        JButton EncryptBtn = new JButton("ENCRYPT Text");
-        EncryptBtn.setBounds(90, 90, 220, 40);
+        JButton EncryptBtn = new JButton("CREATE/ENCRYPT Text PASSWORD");
+        EncryptBtn.setBounds(55, 90, 290, 40);
         conn1.add(EncryptBtn);
         GUIButtonsSetting(EncryptBtn);
         EncryptBtn.addActionListener(e -> {
             if(EncryptBtn ==e.getSource())
             {
                 try{
-                    String text = JOptionPane.showInputDialog("Enter the text to encrypt");
+                    String text = JOptionPane.showInputDialog("Enter the password to encrypt");
                     String secretKey = JOptionPane.showInputDialog("Enter the secret key");
                     if(text.length()>0 && secretKey.length()>0)
                     {
@@ -493,16 +513,16 @@ class PasswordManager implements ActionListener {
         );
 
         // add a decryption button and action
-        JButton DecryptBtn = new JButton("DECRYPT Text"); 
-        DecryptBtn.setBounds(90, 160, 220, 40);
+        JButton DecryptBtn = new JButton("SHOW/DECRYPT Text PASSWORD"); 
+        DecryptBtn.setBounds(55, 160, 280, 40);
         conn1.add(DecryptBtn);
         GUIButtonsSetting(DecryptBtn);
         DecryptBtn.addActionListener(e -> {
             if(DecryptBtn ==e.getSource())
             {
                 try{
-                    String text = JOptionPane.showInputDialog("Enter the text to decrypt"); // getting the encrypted text
-                    String secretKey = JOptionPane.showInputDialog("Enter the secret key"); // getting the secret key
+                    String text = JOptionPane.showInputDialog("Enter the password key generate in the encrypt"); // getting the encrypted text
+                    String secretKey = JOptionPane.showInputDialog("Enter the secret key you create in the encrypt"); // getting the secret key
                     if(text.length()>0 && secretKey.length()>0) // checking if the text and secret key is not empty
                     {
                         //  password generator class reference
@@ -516,7 +536,7 @@ class PasswordManager implements ActionListener {
                     else JOptionPane.showMessageDialog (conn1,"Password length must be greater than 8!","Invalid Input Error",JOptionPane.WARNING_MESSAGE);
 
                 }
-                catch(Exception ex){JOptionPane.showMessageDialog(conn1,"Write something","EXIT!",JOptionPane.ERROR_MESSAGE);}
+                catch(Exception ex){JOptionPane.showMessageDialog(conn1,"Wrong something","EXIT!",JOptionPane.ERROR_MESSAGE);}
             }
         }
         );
@@ -556,10 +576,12 @@ class PasswordManager implements ActionListener {
         }
         );
 
+        
+
         //searching password
-        PassSearchBtn = new JButton("SEARCH PASSWORD");
+        PassSearchBtn = new JButton("SEARCH PASSWORD BY NAME");
         GUIButtonsSetting(PassSearchBtn);
-        PassSearchBtn.setBounds(90, 300, 220, 40);
+        PassSearchBtn.setBounds(65, 300, 270, 40);
         conn1.add(PassSearchBtn);
         PassSearchBtn.addActionListener(e ->{
             if (PassSearchBtn ==e.getSource()){
@@ -582,10 +604,35 @@ class PasswordManager implements ActionListener {
             }
         );
 
+        // PassSearchBtn.addActionListener(e -> {
+        //     if (PassSearchBtn == e.getSource()) {
+        //         try {
+        //             // Get the account name using input dialog
+        //             String acc_name = JOptionPane.showInputDialog("Enter your Account Name"); // getting the account name
+        
+        //             if (acc_name != null && !acc_name.isBlank()) { // Check if the input is not empty
+        //                 Object pass = data.get_Acc(acc_name.toLowerCase()); // Get the password associated with the account name
+        
+        //                 if (pass != null) { // Check if password exists for the account
+        //                     // Display account name and password in a simple text format
+        //                     String message = "Account Name: " + acc_name + "\nPassword: " + pass.toString();
+                            
+        //                     // Show formatted message in JOptionPane
+        //                     JOptionPane.showMessageDialog(conn1, message, "Account Details", JOptionPane.INFORMATION_MESSAGE);
+        //                 } else {
+        //                     JOptionPane.showMessageDialog(conn1, "Account not Found!"); // Account does not exist
+        //                 }
+        //             }
+        //         } catch (Exception ex) {
+        //             JOptionPane.showMessageDialog(conn1, "Write something", "EXIT", JOptionPane.ERROR_MESSAGE);
+        //         }
+        //     }
+        // });
+
         // deleting password
-        PassDeleteBtn = new JButton("DELETE PASSWORD");
+        PassDeleteBtn = new JButton("DELETE PASSWORD BY NAME");
         GUIButtonsSetting(PassDeleteBtn);
-        PassDeleteBtn.setBounds(90, 370, 220, 40);
+        PassDeleteBtn.setBounds(65, 370, 270, 40);
         conn1.add(PassDeleteBtn);
         PassDeleteBtn.addActionListener(e -> {
             if (PassDeleteBtn == e.getSource()) {
@@ -604,9 +651,9 @@ class PasswordManager implements ActionListener {
         }
         );
 
-        addNoteBtn = new JButton("ADD NOTE");
+        addNoteBtn = new JButton("ADD NOTE THE ALL KEY PASSWORD");
         GUIButtonsSetting(addNoteBtn);
-        addNoteBtn.setBounds(90, 440, 220, 40);
+        addNoteBtn.setBounds(50, 440, 310, 40);
         conn1.add(addNoteBtn);
         addNoteBtn.addActionListener(e -> {
             if (addNoteBtn == e.getSource()) {
@@ -634,28 +681,35 @@ class PasswordManager implements ActionListener {
         }
         );
         
-        //get all notes
-        JButton getNoteBtn = new JButton("GET NOTE");
-        GUIButtonsSetting(getNoteBtn);
-        getNoteBtn.setBounds(90, 510, 220, 40);
-        conn1.add(getNoteBtn);
-        getNoteBtn.addActionListener(e -> {
-            if (getNoteBtn == e.getSource()) {
-                try {
-                    String allNotes = notes.get(notes.size() - 1); // getting the last note added
-                    if (allNotes.isEmpty()) { // checking if the note is empty or not
-                        JOptionPane.showMessageDialog(conn1, "No note found!", "INFO", JOptionPane.INFORMATION_MESSAGE); // showing the message
-                    } else {
-                        searchPassArea = new JTextArea(4, 5); // text area for the note
-                        textArea(allNotes, searchPassArea); // setting the text area
-                        JOptionPane.showMessageDialog(conn1, new JScrollPane(searchPassArea), "Get your notes", JOptionPane.INFORMATION_MESSAGE); // showing the message
-                    }
-                } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(conn1, "Add a note before trying to retrive", "EXIT", JOptionPane.ERROR_MESSAGE);
+      // Get all notes
+JButton getNoteBtn = new JButton("GET ALL NOTE THE ALL KEY PASSWORD");
+GUIButtonsSetting(getNoteBtn);
+getNoteBtn.setBounds(40, 510, 330, 40);
+conn1.add(getNoteBtn);
+getNoteBtn.addActionListener(e -> {
+    if (getNoteBtn == e.getSource()) {
+        try {
+            if (notes.isEmpty()) { // Check if no notes exist
+                JOptionPane.showMessageDialog(conn1, "No notes found!", "INFO", JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                StringBuilder allNotes = new StringBuilder(); // To concatenate all notes
+                for (int i = 0; i < notes.size(); i++) {
+                    allNotes.append("Note ").append(i + 1).append(": ").append(notes.get(i)).append("\n");
                 }
+                
+                searchPassArea = new JTextArea(10, 30); // Larger text area
+                searchPassArea.setText(allNotes.toString());
+                searchPassArea.setEditable(false); // Make text area read-only
+                
+                // Show all notes in a scrollable pane
+                JOptionPane.showMessageDialog(conn1, new JScrollPane(searchPassArea), "All Notes", JOptionPane.INFORMATION_MESSAGE);
             }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(conn1, "Error retrieving notes!", "ERROR", JOptionPane.ERROR_MESSAGE);
         }
-        );
+    }
+});
+
 
     }
 
